@@ -1,0 +1,47 @@
+name: Generate Release PR
+
+on:
+  workflow_dispatch:
+
+jobs:
+  generate-pr:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Batch changes
+      uses: miniscruff/changie-action@v2
+      with:
+        version: latest
+        args: batch auto
+
+    - name: Merge changes
+      uses: miniscruff/changie-action@v2
+      with:
+        version: latest
+        args: merge
+
+    - name: Get the latest version
+      id: latest
+      uses: miniscruff/changie-action@v2
+      with:
+        version: latest
+        args: latest
+
+    - name: Update version in pyproject.toml
+      run: |
+        LATEST_VERSION=${{ steps.latest.outputs.output }}
+        LATEST_VERSION_STRIPPED=${LATEST_VERSION#v}
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+          sed -i '' "s/version = \"[0-9]*\.[0-9]*\.[0-9]*\"/version = \"${LATEST_VERSION_STRIPPED}\"/" pyproject.toml
+        else
+          sed -i "s/version = \"[0-9]*\.[0-9]*\.[0-9]*\"/version = \"${LATEST_VERSION_STRIPPED}\"/" pyproject.toml
+        fi
+
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v4
+      with:
+        title: Release ${{ steps.latest.outputs.output }}
+        branch: release/${{ steps.latest.outputs.output }}
+        commit-message: Release ${{ steps.latest.outputs.output }}
