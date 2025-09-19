@@ -251,30 +251,38 @@ class DeltaStreamClient:
     async def use_database(self, database: str) -> None:
         """Switch to a different database."""
         # Use DATABASE keyword for DeltaStream syntax
-        escaped_db = database if database.startswith('"') and database.endswith('"') else f'"{database}"'
-        sql = f'USE DATABASE {escaped_db}'
+        escaped_db = (
+            database
+            if database.startswith('"') and database.endswith('"')
+            else f'"{database}"'
+        )
+        sql = f"USE DATABASE {escaped_db}"
         await self.execute_sql(sql)
-        
+
         # Update the current database in memory
         self._current_database = database
 
     async def use_store(self, store: str) -> None:
         """Switch to a different store."""
         # Use STORE keyword for DeltaStream syntax
-        escaped_store = store if store.startswith('"') and store.endswith('"') else f'"{store}"'
-        sql = f'USE STORE {escaped_store}'
+        escaped_store = (
+            store if store.startswith('"') and store.endswith('"') else f'"{store}"'
+        )
+        sql = f"USE STORE {escaped_store}"
         await self.execute_sql(sql)
-        
+
         # Update the current store in memory
         self._current_store = store
 
     async def use_schema(self, schema: str) -> None:
         """Switch to a different schema."""
         # Use SCHEMA keyword for DeltaStream syntax
-        escaped_schema = schema if schema.startswith('"') and schema.endswith('"') else f'"{schema}"'
-        sql = f'USE SCHEMA {escaped_schema}'
+        escaped_schema = (
+            schema if schema.startswith('"') and schema.endswith('"') else f'"{schema}"'
+        )
+        sql = f"USE SCHEMA {escaped_schema}"
         await self.execute_sql(sql)
-        
+
         # Update the current schema in memory
         self._current_schema = schema
 
@@ -283,16 +291,16 @@ class DeltaStreamClient:
         # If we have a cached current database, return it
         if self._current_database:
             return self._current_database
-        
+
         # Otherwise, query LIST DATABASES to find the default database
         try:
             databases = await self.databases.list()
             for db in databases:
                 # Look for the default database
-                if hasattr(db, 'is_default') and db.is_default:
+                if hasattr(db, "is_default") and db.is_default:
                     self._current_database = db.name
                     return db.name
-            
+
             # If no default found, return the first database if any exist
             if databases:
                 self._current_database = databases[0].name
@@ -300,7 +308,7 @@ class DeltaStreamClient:
         except Exception:
             # If list databases fails, return empty string
             pass
-        
+
         return ""
 
     async def get_current_store(self) -> str:
@@ -308,16 +316,16 @@ class DeltaStreamClient:
         # If we have a cached current store, return it
         if self._current_store:
             return self._current_store
-        
+
         # Otherwise, query LIST STORES to find the default store
         try:
             stores = await self.stores.list()
             for store in stores:
                 # Look for the default store
-                if hasattr(store, 'is_default') and store.is_default:
+                if hasattr(store, "is_default") and store.is_default:
                     self._current_store = store.name
                     return store.name
-            
+
             # If no default found, return the first store if any exist
             if stores:
                 self._current_store = stores[0].name
@@ -325,7 +333,7 @@ class DeltaStreamClient:
         except Exception:
             # If list stores fails, return empty string
             pass
-        
+
         return ""
 
     async def get_current_schema(self) -> str:
@@ -333,16 +341,16 @@ class DeltaStreamClient:
         # If we have a cached current schema, return it
         if self._current_schema:
             return self._current_schema
-        
+
         # Otherwise, query LIST SCHEMAS to find the default schema
         try:
             schemas = await self.schemas.list()
             for schema in schemas:
                 # Look for the default schema
-                if hasattr(schema, 'is_default') and schema.is_default:
+                if hasattr(schema, "is_default") and schema.is_default:
                     self._current_schema = schema.name
                     return schema.name
-            
+
             # If no default found, return the first schema if any exist
             if schemas:
                 self._current_schema = schemas[0].name
@@ -350,7 +358,7 @@ class DeltaStreamClient:
         except Exception:
             # If list schemas fails, return empty string
             pass
-        
+
         return ""
 
     # Context manager support

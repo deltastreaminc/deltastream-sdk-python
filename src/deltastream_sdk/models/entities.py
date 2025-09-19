@@ -11,7 +11,9 @@ class Entity(BaseModel):
 
     entity_type: Optional[str] = None
     schema_definition: Optional[str] = None
-    is_leaf: Optional[bool] = None  # Whether this entity is a leaf (can't contain other entities)
+    is_leaf: Optional[bool] = (
+        None  # Whether this entity is a leaf (can't contain other entities)
+    )
 
 
 @dataclass

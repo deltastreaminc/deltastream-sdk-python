@@ -194,7 +194,7 @@ class TestDeltaStreamClientOperations:
         client_with_mock_connection.connection.exec.assert_called_once_with(
             expected_sql
         )
-        
+
         # Check that the current database is updated in memory
         assert client_with_mock_connection._current_database == "test_db"
 
@@ -211,7 +211,9 @@ class TestDeltaStreamClientOperations:
         mock_column3.name = "Owner"
         mock_column4 = MagicMock()
         mock_column4.name = "Created At"
-        mock_rows.columns = MagicMock(return_value=[mock_column1, mock_column2, mock_column3, mock_column4])
+        mock_rows.columns = MagicMock(
+            return_value=[mock_column1, mock_column2, mock_column3, mock_column4]
+        )
 
         async def mock_iter(self):
             yield ["test_database", True, "owner", "2023-01-01"]

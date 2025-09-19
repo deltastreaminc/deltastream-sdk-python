@@ -26,7 +26,7 @@ sys.modules["deltastream.api"] = mock_api
 sys.modules["deltastream.api.conn"] = mock_api.conn
 
 # Import SDK components after mocking
-from deltastream_sdk import DeltaStreamClient
+from deltastream_sdk import DeltaStreamClient  # noqa: E402
 
 
 @pytest.fixture

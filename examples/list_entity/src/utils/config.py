@@ -61,13 +61,9 @@ class Config:
     def validate(self) -> None:
         """Validate that required configuration is present."""
         if not self.auth_token:
-            raise ValueError(
-                "DELTASTREAM_TOKEN environment variable is required"
-            )
+            raise ValueError("DELTASTREAM_TOKEN environment variable is required")
         if not self.organization_id:
-            raise ValueError(
-                "DELTASTREAM_ORG_ID environment variable is required"
-            )
+            raise ValueError("DELTASTREAM_ORG_ID environment variable is required")
 
         # Check token validity
         self._validate_token()

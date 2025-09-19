@@ -26,6 +26,6 @@ __all__ = [
     "InvalidConfiguration",
     "ConnectionError",
     "models",
-    "resources", 
+    "resources",
     "exceptions",
 ]

@@ -2,7 +2,6 @@
 
 from .base import BaseResourceManager
 from ..models.databases import Database, DatabaseCreateParams
-from ..exceptions import ResourceNotFound, SQLError
 
 
 class DatabaseManager(BaseResourceManager[Database]):
