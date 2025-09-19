@@ -15,7 +15,6 @@ from deltastream_sdk.models.entities import EntityCreateParams
 from dotenv import find_dotenv, load_dotenv
 
 
-
 def get_env(name: str) -> str:
     value = os.getenv(name)
     if not value:
@@ -43,7 +42,9 @@ async def find_store(client: DeltaStreamClient, store_name: str):
         print("Available stores:")
         for store in stores:
             print(f"  - {store.name}")
-        print("\nPlease update STORE_NAME in .env to match one of the available stores.")
+        print(
+            "\nPlease update STORE_NAME in .env to match one of the available stores."
+        )
         sys.exit(1)
 
     print(f"\n✅ Found configured store: {target_store.name}")
@@ -84,18 +85,26 @@ async def ensure_entity(client: DeltaStreamClient, entity_name: str, target_stor
                     "kafka.topic.partitions": 1,
                     "kafka.topic.replicas": 1,
                     "kafka.topic.retention.ms": "604800000",  # 7 days
-                    "kafka.topic.segment.ms": "86400000"      # 1 day
-                }
+                    "kafka.topic.segment.ms": "86400000",  # 1 day
+                },
             )
-            print(f"Creating entity with params: name='{entity_name}', store='{target_store.name}', params={create_params.params}")
+            print(
+                f"Creating entity with params: name='{entity_name}', store='{target_store.name}', params={create_params.params}"
+            )
             await client.entities.create(params=create_params)
-            print(f"Entity '{entity_name}' created successfully in store '{target_store.name}'")
+            print(
+                f"Entity '{entity_name}' created successfully in store '{target_store.name}'"
+            )
         except Exception as e:
             error_msg = str(e)
             if "already exists" in error_msg:
-                print(f"Entity '{entity_name}' already exists (topic level), continuing...")
+                print(
+                    f"Entity '{entity_name}' already exists (topic level), continuing..."
+                )
             elif "schema not found" in error_msg:
-                print(f"Entity '{entity_name}' created successfully but retrieval failed, continuing...")
+                print(
+                    f"Entity '{entity_name}' created successfully but retrieval failed, continuing..."
+                )
             else:
                 print(f"Could not create entity using SDK: {e}")
                 sys.exit(1)
@@ -112,13 +121,15 @@ async def insert_data(client: DeltaStreamClient, entity_name: str, store_name: s
         {"viewtime": 1753311018650, "userid": "User_4", "pageid": "Page_2"},
     ]
 
-    print(f"Attempting to insert {len(sample_data)} records into entity '{entity_name}' in store '{store_name}'...")
-    print(f"Generated SQL will be: INSERT INTO ENTITY \"{entity_name}\" IN STORE \"{store_name}\" VALUE ('{{\"viewtime\": 1753311018649,\"userid\": \"User_3\",\"pageid\": \"Page_1\"}}')")
+    print(
+        f"Attempting to insert {len(sample_data)} records into entity '{entity_name}' in store '{store_name}'..."
+    )
+    print(
+        f'Generated SQL will be: INSERT INTO ENTITY "{entity_name}" IN STORE "{store_name}" VALUE (\'{{"viewtime": 1753311018649,"userid": "User_3","pageid": "Page_1"}}\')'
+    )
 
     await client.entities.insert_values(
-        name=entity_name,
-        values=sample_data,
-        store=store_name
+        name=entity_name, values=sample_data, store=store_name
     )
     print("Insert completed successfully.")
 

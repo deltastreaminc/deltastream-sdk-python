@@ -9,7 +9,6 @@ from ..models.entities import (
     EntityCreateParams,
     EntityUpdateParams,
 )
-from ..models.base import WithClause
 
 
 class EntityManager(BaseResourceManager[Entity]):
@@ -33,20 +32,20 @@ class EntityManager(BaseResourceManager[Entity]):
 
         name = self._escape_identifier(create_params.name)
         sql = f"CREATE ENTITY {name}"
-        
+
         if create_params.store:
             escaped_store = self._escape_identifier(create_params.store)
             sql += f" IN STORE {escaped_store}"
-        
+
         with_parts = []
-        
+
         if create_params.params:
             for key, value in create_params.params.items():
                 with_parts.append(f"'{key}' = {self._escape_string(str(value))}")
-        
+
         if with_parts:
             sql += f" WITH ({', '.join(with_parts)})"
-        
+
         return sql
 
     def _get_update_sql(self, name: str, **params) -> str:
@@ -92,14 +91,14 @@ class EntityManager(BaseResourceManager[Entity]):
             single = values[0]
             json_str = self._escape_string(to_json_string(single))
             sql = f"INSERT INTO ENTITY {escaped_name}"
-            
+
             # Add IN STORE clause if store is provided
             if store:
                 escaped_store = self._escape_identifier(store)
                 sql += f" IN STORE {escaped_store}"
-            
+
             sql += f" VALUE({json_str})"
-            
+
             # Add WITH clause if we have with_params
             if with_params:
                 with_parts = []
@@ -110,21 +109,23 @@ class EntityManager(BaseResourceManager[Entity]):
             for record in values:
                 json_str = self._escape_string(to_json_string(record))
                 single_sql = f"INSERT INTO ENTITY {escaped_name}"
-                
+
                 # Add IN STORE clause if store is provided
                 if store:
                     escaped_store = self._escape_identifier(store)
                     single_sql += f" IN STORE {escaped_store}"
-                
+
                 single_sql += f" VALUE({json_str})"
-                
+
                 # Add WITH clause if we have with_params
                 if with_params:
                     with_parts = []
                     for key, value in with_params.items():
-                        with_parts.append(f"'{key}' = {self._escape_string(str(value))}")
+                        with_parts.append(
+                            f"'{key}' = {self._escape_string(str(value))}"
+                        )
                     single_sql += f" WITH ({', '.join(with_parts)})"
-                    
+
                 await self._execute_sql(single_sql)
             return
 
@@ -146,17 +147,17 @@ class EntityManager(BaseResourceManager[Entity]):
             List of Entity objects representing the entities
         """
         sql = "LIST ENTITIES"
-        
+
         # Add IN clause for entity path if provided
         if entity_path:
             escaped_path = self._escape_identifier(entity_path)
             sql += f" IN {escaped_path}"
-        
+
         # Add IN STORE clause if provided
         if store:
             escaped_store = self._escape_identifier(store)
             sql += f" IN STORE {escaped_store}"
-        
+
         try:
             results = await self._query_sql(sql)
             entities = []
@@ -171,9 +172,10 @@ class EntityManager(BaseResourceManager[Entity]):
                     entity.is_leaf = result["Is Leaf"]
                 elif "is_leaf" in result:
                     entity.is_leaf = result["is_leaf"]
-                    
+
                 entities.append(entity)
             return entities
         except Exception as e:
             from ..exceptions import SQLError
+
             raise SQLError(f"Failed to list entities: {e}") from e

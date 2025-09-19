@@ -575,17 +575,17 @@ class TestEntityManager:
 
         # With multiple values, the method makes separate calls for each value
         assert mock_connection.exec.call_count == 2
-        
+
         # Check the calls were made with the expected SQL
         calls = mock_connection.exec.call_args_list
         first_call = calls[0][0][0]
         second_call = calls[1][0][0]
-        
+
         assert 'INSERT INTO ENTITY "my_entity"' in first_call
         assert 'IN STORE "my_store"' in first_call
         assert '(\'{"pageId": 10, "pageviews": 123}\')' in first_call
-        
-        assert 'INSERT INTO ENTITY "my_entity"' in second_call  
+
+        assert 'INSERT INTO ENTITY "my_entity"' in second_call
         assert 'IN STORE "my_store"' in second_call
         assert '(\'{"pageId": 15, "pageviews": 256}\')' in second_call
 
@@ -610,7 +610,7 @@ class TestEntityManager:
         # Ensure proper SQL structure: INSERT INTO ENTITY ... IN STORE ... VALUE(...) WITH (...)
         expected_pattern = 'INSERT INTO ENTITY "my_entity" IN STORE "my_store" VALUE'
         assert expected_pattern in call_args
-        assert 'WITH (' in call_args
+        assert "WITH (" in call_args
 
     @pytest.mark.asyncio
     async def test_insert_values_single_value_exact_sql(self, mock_connection):
@@ -620,13 +620,17 @@ class TestEntityManager:
 
         await manager.insert_values(
             name="test-sdk",
-            values=[{"viewtime": 1753311018649, "userid": "User_3", "pageid": "Page_1"}],
+            values=[
+                {"viewtime": 1753311018649, "userid": "User_3", "pageid": "Page_1"}
+            ],
             store="ChristopheKafka",
         )
 
         call_args = mock_connection.exec.call_args[0][0]
         # Verify the exact SQL format matches the expected syntax
-        expected_start = 'INSERT INTO ENTITY "test-sdk" IN STORE "ChristopheKafka" VALUE('
+        expected_start = (
+            'INSERT INTO ENTITY "test-sdk" IN STORE "ChristopheKafka" VALUE('
+        )
         assert call_args.startswith(expected_start)
         assert '"viewtime": 1753311018649' in call_args
         assert '"userid": "User_3"' in call_args
