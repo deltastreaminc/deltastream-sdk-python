@@ -81,7 +81,8 @@ if __name__ == "__main__":
 ### Environment Variables
 
 ```bash
-export DELTASTREAM_DSN="deltastream://user:pass@host:port/"             # Option A
+# Option A (DSN-based)
+export DELTASTREAM_DSN="https://:your_token@api.deltastream.io/v2"             
 # OR explicit config (Option B)
 export DELTASTREAM_SERVER_URL="https://api.deltastream.io/v2"
 export DELTASTREAM_TOKEN="your_token_here"
@@ -115,7 +116,7 @@ client = DeltaStreamClient(
 )
 
 # 3. DSN-based
-client = DeltaStreamClient(dsn="deltastream://user:pass@host:port/")
+client = DeltaStreamClient(dsn="https://:your_token@api.deltastream.io/v2")
 ```
 
 ### Streams
@@ -149,16 +150,36 @@ async def stream_example(client):
 
 ```python
 async def store_example(client):
+    # Create a Kafka store with PLAIN authentication
     kafka_store = await client.stores.create_kafka_store(
         name="my_kafka",
-        bootstrap_servers="localhost:9092",
-        auth_type="PLAIN",
-        username="user",
-        password="pass",
-        schema_registry_url="http://localhost:8081",
+        uris="localhost:9092",
+        kafka_sasl_hash_function="PLAIN",
+        kafka_sasl_username="user",
+        kafka_sasl_password="pass",
+        schema_registry_name="my_schema_registry",
     )
 
+    # Create an S3 store with IAM role
+    s3_store = await client.stores.create_s3_store(
+        name="my_s3",
+        uris="https://mybucket.s3.amazonaws.com/",
+        aws_iam_role_arn="arn:aws:iam::123456789012:role/DeltaStreamRole",
+        aws_iam_external_id="external-id-123",
+    )
+
+    # Create a Kinesis store
+    kinesis_store = await client.stores.create_kinesis_store(
+        name="my_kinesis",
+        uris="https://kinesis.us-east-1.amazonaws.com",
+        kinesis_access_key_id="AKIAIOSFODNN7EXAMPLE",
+        kinesis_secret_access_key="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+    )
+
+    # List topics from a store
     topics = await client.stores.get_topics("my_kafka")
+    
+    # List all stores
     all_stores = await client.stores.list()
 ```
 

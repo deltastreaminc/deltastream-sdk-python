@@ -41,13 +41,9 @@ class StoreManager(BaseResourceManager[Store]):
             create_params = StoreCreateParams(**params)
 
         name = self._escape_identifier(create_params.name)
-        store_type = create_params.store_type.upper()
 
         # Build CREATE STORE statement
-        sql = f"CREATE STORE {name} TYPE {store_type}"
-
-        if create_params.comment:
-            sql += f" COMMENT {self._escape_string(create_params.comment)}"
+        sql = f"CREATE STORE {name}"
 
         # Add WITH clause for connection parameters
         with_clause = create_params.to_with_clause()
@@ -84,22 +80,36 @@ class StoreManager(BaseResourceManager[Store]):
     async def create_kafka_store(
         self,
         name: str,
-        bootstrap_servers: str,
-        auth_type: Optional[str] = None,
-        username: Optional[str] = None,
-        password: Optional[str] = None,
-        schema_registry_url: Optional[str] = None,
+        uris: str,
+        kafka_sasl_hash_function: Optional[str] = None,
+        kafka_sasl_username: Optional[str] = None,
+        kafka_sasl_password: Optional[str] = None,
+        schema_registry_name: Optional[str] = None,
         **kwargs,
     ) -> Store:
-        """Create a Kafka data store."""
+        """
+        Create a Kafka data store.
+
+        Args:
+            name: Name of the store
+            uris: Comma-separated list of broker URIs (e.g., 'kafka:9092,kafka2:9092')
+            kafka_sasl_hash_function: SASL hash function (NONE, PLAIN, SHA256, SHA512, AWS_MSK_IAM)
+            kafka_sasl_username: Username for SASL authentication
+            kafka_sasl_password: Password for SASL authentication
+            schema_registry_name: Name of associated schema registry
+            **kwargs: Additional properties (e.g., tls_ca_cert_file, kafka_msk_aws_region)
+
+        Returns:
+            Created Store object
+        """
         params = StoreCreateParams(
             name=name,
             store_type="KAFKA",
-            bootstrap_servers=bootstrap_servers,
-            auth_type=auth_type,
-            username=username,
-            password=password,
-            schema_registry_url=schema_registry_url,
+            uris=uris,
+            kafka_sasl_hash_function=kafka_sasl_hash_function,
+            kafka_sasl_username=kafka_sasl_username,
+            kafka_sasl_password=kafka_sasl_password,
+            schema_registry_name=schema_registry_name,
             **kwargs,
         )
         return await self.create(params=params)
@@ -107,18 +117,33 @@ class StoreManager(BaseResourceManager[Store]):
     async def create_kinesis_store(
         self,
         name: str,
-        region: str,
-        access_key_id: Optional[str] = None,
-        secret_access_key: Optional[str] = None,
+        uris: str,
+        kinesis_access_key_id: Optional[str] = None,
+        kinesis_secret_access_key: Optional[str] = None,
+        kinesis_iam_role_arn: Optional[str] = None,
         **kwargs,
     ) -> Store:
-        """Create a Kinesis data store."""
+        """
+        Create a Kinesis data store.
+
+        Args:
+            name: Name of the store
+            uris: Kinesis endpoint URI (e.g., 'https://kinesis.us-east-1.amazonaws.com')
+            kinesis_access_key_id: AWS access key for static credentials
+            kinesis_secret_access_key: AWS secret key for static credentials
+            kinesis_iam_role_arn: IAM role ARN for authentication
+            **kwargs: Additional properties
+
+        Returns:
+            Created Store object
+        """
         params = StoreCreateParams(
             name=name,
             store_type="KINESIS",
-            region=region,
-            access_key_id=access_key_id,
-            secret_access_key=secret_access_key,
+            uris=uris,
+            kinesis_access_key_id=kinesis_access_key_id,
+            kinesis_secret_access_key=kinesis_secret_access_key,
+            kinesis_iam_role_arn=kinesis_iam_role_arn,
             **kwargs,
         )
         return await self.create(params=params)
@@ -126,18 +151,36 @@ class StoreManager(BaseResourceManager[Store]):
     async def create_s3_store(
         self,
         name: str,
-        region: str,
-        access_key_id: Optional[str] = None,
-        secret_access_key: Optional[str] = None,
+        uris: str,
+        aws_access_key_id: Optional[str] = None,
+        aws_secret_access_key: Optional[str] = None,
+        aws_iam_role_arn: Optional[str] = None,
+        aws_iam_external_id: Optional[str] = None,
         **kwargs,
     ) -> Store:
-        """Create an S3 data store."""
+        """
+        Create an S3 data store.
+
+        Args:
+            name: Name of the store
+            uris: S3 bucket URI (e.g., 'https://mybucket.s3.amazonaws.com/')
+            aws_access_key_id: AWS access key for static credentials
+            aws_secret_access_key: AWS secret key for static credentials
+            aws_iam_role_arn: IAM role ARN for authentication
+            aws_iam_external_id: External ID for IAM role assumption
+            **kwargs: Additional properties
+
+        Returns:
+            Created Store object
+        """
         params = StoreCreateParams(
             name=name,
             store_type="S3",
-            region=region,
-            access_key_id=access_key_id,
-            secret_access_key=secret_access_key,
+            uris=uris,
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+            aws_iam_role_arn=aws_iam_role_arn,
+            aws_iam_external_id=aws_iam_external_id,
             **kwargs,
         )
         return await self.create(params=params)

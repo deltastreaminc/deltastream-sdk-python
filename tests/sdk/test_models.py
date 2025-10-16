@@ -124,8 +124,6 @@ class TestStoreModel:
         assert store.name == "test_store"
         assert store.owner == "test_user"
         assert store.store_type == "KAFKA"
-        assert store.bootstrap_servers == "localhost:9092"
-        assert store.auth_type == "PLAIN"
 
     def test_from_dict_minimal(self):
         """Test creating Store from minimal data."""
@@ -135,7 +133,6 @@ class TestStoreModel:
 
         assert store.name == "minimal_store"
         assert store.store_type is None
-        assert store.bootstrap_servers is None
 
 
 class TestDatabaseModel:
@@ -273,20 +270,84 @@ class TestCreateParamsModels:
         params = StoreCreateParams(
             name="test_store",
             store_type="KAFKA",
-            bootstrap_servers="localhost:9092",
-            auth_type="PLAIN",
-            username="user",
-            password="pass",
+            uris="localhost:9092",
+            kafka_sasl_hash_function="PLAIN",
+            kafka_sasl_username="user",
+            kafka_sasl_password="pass",
         )
 
         with_clause = params.to_with_clause()
         sql = with_clause.to_sql()
 
-        assert "'type' = 'KAFKA'" in sql
-        assert "'bootstrap.servers' = 'localhost:9092'" in sql
-        assert "'auth.type' = 'PLAIN'" in sql
-        assert "'auth.username' = 'user'" in sql
-        assert "'auth.password' = 'pass'" in sql
+        # Note: 'type' and 'kafka.sasl.hash_function' values are NOT quoted (SQL keywords)
+        assert "'type' = KAFKA" in sql
+        assert "'uris' = 'localhost:9092'" in sql
+        assert "'kafka.sasl.hash_function' = PLAIN" in sql
+        assert "'kafka.sasl.username' = 'user'" in sql
+        assert "'kafka.sasl.password' = 'pass'" in sql
+
+    def test_store_create_params_with_additional_properties(self):
+        """Test StoreCreateParams with additional_properties."""
+        params = StoreCreateParams(
+            name="test_store",
+            store_type="KAFKA",
+            uris="localhost:9092",
+            additional_properties={
+                "custom.param": "custom_value",
+                "another.param": "another_value",
+            },
+        )
+
+        with_clause = params.to_with_clause()
+        sql = with_clause.to_sql()
+
+        assert "'type' = KAFKA" in sql
+        assert "'uris' = 'localhost:9092'" in sql
+        assert "'custom.param' = 'custom_value'" in sql
+        assert "'another.param' = 'another_value'" in sql
+
+    def test_store_create_params_kinesis(self):
+        """Test StoreCreateParams for Kinesis with IAM role."""
+        params = StoreCreateParams(
+            name="kinesis_store",
+            store_type="KINESIS",
+            uris="https://url.to.kinesis.aws:4566",
+            kinesis_iam_role_arn="arn:aws:iam::123456789012:role/example-IAM-role",
+        )
+
+        with_clause = params.to_with_clause()
+        sql = with_clause.to_sql()
+
+        assert "'type' = KINESIS" in sql
+        assert "'uris' = 'https://url.to.kinesis.aws:4566'" in sql
+        assert (
+            "'kinesis.iam_role_arn' = 'arn:aws:iam::123456789012:role/example-IAM-role'"
+            in sql
+        )
+
+    def test_store_create_params_snowflake(self):
+        """Test StoreCreateParams for Snowflake."""
+        params = StoreCreateParams(
+            name="snowflake_store",
+            store_type="SNOWFLAKE",
+            uris="https://my-account.snowflakecomputing.com",
+            snowflake_account_id="my-account",
+            snowflake_role_name="ACCOUNTADMIN",
+            snowflake_username="STREAMING_USER",
+            snowflake_warehouse_name="COMPUTE_WH",
+            snowflake_client_key_file="@/path/to/pk/my_account_rsa.p8",
+        )
+
+        with_clause = params.to_with_clause()
+        sql = with_clause.to_sql()
+
+        assert "'type' = SNOWFLAKE" in sql
+        assert "'uris' = 'https://my-account.snowflakecomputing.com'" in sql
+        assert "'snowflake.account_id' = 'my-account'" in sql
+        assert "'snowflake.role_name' = 'ACCOUNTADMIN'" in sql
+        assert "'snowflake.username' = 'STREAMING_USER'" in sql
+        assert "'snowflake.warehouse_name' = 'COMPUTE_WH'" in sql
+        assert "'snowflake.client.key_file' = '@/path/to/pk/my_account_rsa.p8'" in sql
 
     def test_compute_pool_create_params_to_with_clause(self):
         """Test ComputePoolCreateParams to WITH clause conversion."""

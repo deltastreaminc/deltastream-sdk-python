@@ -112,10 +112,33 @@ class WithClause:
             str_value = str(value)
             return str_value.replace("'", "''")
 
-        params = [
-            f"'{key}' = '{escape_value(value)}'"
-            for key, value in self.parameters.items()
-        ]
+        def should_quote_value(key: str, value: str) -> bool:
+            """
+            Determine if a value should be quoted based on the parameter name.
+
+            According to DeltaStream documentation, certain parameter types have
+            enum/keyword values that should NOT be quoted.
+            """
+            # Parameter names whose values should NOT be quoted (they are SQL keywords/enums)
+            # Based on DeltaStream CREATE STORE documentation
+            unquoted_param_names = {
+                "type",  # KAFKA, KINESIS, S3, SNOWFLAKE, DATABRICKS, POSTGRESQL, CLICKHOUSE, ICEBERG_GLUE, ICEBERG_REST
+                "kafka.sasl.hash_function",  # NONE, PLAIN, SHA256, SHA512, AWS_MSK_IAM
+                "tls.disabled",  # TRUE, FALSE
+                "tls.verify_server_hostname",  # TRUE, FALSE
+            }
+
+            # Check if this parameter name should have unquoted values
+            return key not in unquoted_param_names
+
+        params = []
+        for key, value in self.parameters.items():
+            if should_quote_value(key, str(value)):
+                params.append(f"'{key}' = '{escape_value(value)}'")
+            else:
+                # For unquoted values, use the value as-is (no escaping, no quotes)
+                params.append(f"'{key}' = {value}")
+
         return f"WITH ({', '.join(params)})"
 
     @classmethod

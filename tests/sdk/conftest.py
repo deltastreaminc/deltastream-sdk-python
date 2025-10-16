@@ -100,8 +100,6 @@ def sample_store_data():
         "created_at": "2024-01-01T00:00:00Z",
         "updated_at": "2024-01-01T00:00:00Z",
         "store_type": "KAFKA",
-        "bootstrap_servers": "localhost:9092",
-        "auth_type": "PLAIN",
     }
 
 
@@ -130,6 +128,18 @@ def sample_compute_pool_data():
         "min_units": 1,
         "max_units": 5,
         "auto_suspend": True,
+    }
+
+
+@pytest.fixture
+def sample_entity_data():
+    """Sample entity data for testing."""
+    return {
+        "name": "test_entity",
+        "owner": "test_user",
+        "created_at": "2024-01-01T00:00:00Z",
+        "updated_at": "2024-01-01T00:00:00Z",
+        "is_leaf": True,
     }
 
 
