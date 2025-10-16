@@ -11,7 +11,6 @@ import sys
 
 from deltastream_sdk import DeltaStreamClient
 from deltastream_sdk.exceptions import DeltaStreamSDKError
-from deltastream_sdk.models.entities import EntityCreateParams
 from dotenv import find_dotenv, load_dotenv
 
 
@@ -77,21 +76,16 @@ async def ensure_entity(client: DeltaStreamClient, entity_name: str, target_stor
     if not entity_exists:
         print(f"Creating entity '{entity_name}' in store '{target_store.name}'...")
         try:
-            # Use the SDK's EntityCreateParams with valid Kafka parameters
-            create_params = EntityCreateParams(
+            await client.entities.create(
                 name=entity_name,
                 store=target_store.name,
                 params={
-                    "kafka.topic.partitions": 1,
-                    "kafka.topic.replicas": 1,
+                    "kafka.partitions": 1,
+                    "kafka.replicas": 1,
                     "kafka.topic.retention.ms": "604800000",  # 7 days
                     "kafka.topic.segment.ms": "86400000",  # 1 day
                 },
             )
-            print(
-                f"Creating entity with params: name='{entity_name}', store='{target_store.name}', params={create_params.params}"
-            )
-            await client.entities.create(params=create_params)
             print(
                 f"Entity '{entity_name}' created successfully in store '{target_store.name}'"
             )

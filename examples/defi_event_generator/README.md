@@ -217,18 +217,6 @@ The generator follows these patterns:
 4. **Async Operations**: Leverages Python asyncio for non-blocking event generation
 5. **Configurable Timing**: Adjustable intervals for different testing scenarios
 
-## Comparison with Java Version
-
-This Python implementation provides the same functionality as the original Java version with these differences:
-
-| Feature | Java | Python |
-|---------|------|--------|
-| Kafka Client | Direct KafkaProducer | DeltaStream SDK (entities.insert_values) |
-| Concurrency | ScheduledExecutorService | asyncio |
-| Configuration | Hard-coded constants | Environment variables |
-| JSON Handling | Jackson ObjectMapper | Python dict + json module |
-| Entity Management | Manual topic creation | SDK EntityCreateParams |
-
 ## Troubleshooting
 
 ### Entities Not Created

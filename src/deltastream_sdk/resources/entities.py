@@ -17,6 +17,26 @@ class EntityManager(BaseResourceManager[Entity]):
     def __init__(self, connection):
         super().__init__(connection, Entity)
 
+    def _format_with_param(self, key: str, value: Any) -> str:
+        """Format a WITH clause parameter based on its value type.
+
+        Args:
+            key: The parameter key
+            value: The parameter value
+
+        Returns:
+            Formatted string for the WITH clause parameter
+        """
+        if isinstance(value, bool):
+            # Boolean values should be lowercase true/false (before numeric check)
+            return f"'{key}' = {str(value).lower()}"
+        elif isinstance(value, (int, float)):
+            # Numeric values should not be quoted
+            return f"'{key}' = {value}"
+        else:
+            # String values should be quoted and escaped
+            return f"'{key}' = {self._escape_string(str(value))}"
+
     def _get_list_sql(self, **filters) -> str:
         return "LIST ENTITIES"
 
@@ -41,7 +61,7 @@ class EntityManager(BaseResourceManager[Entity]):
 
         if create_params.params:
             for key, value in create_params.params.items():
-                with_parts.append(f"'{key}' = {self._escape_string(str(value))}")
+                with_parts.append(self._format_with_param(key, value))
 
         if with_parts:
             sql += f" WITH ({', '.join(with_parts)})"
@@ -103,7 +123,7 @@ class EntityManager(BaseResourceManager[Entity]):
             if with_params:
                 with_parts = []
                 for key, value in with_params.items():
-                    with_parts.append(f"'{key}' = {self._escape_string(str(value))}")
+                    with_parts.append(self._format_with_param(key, value))
                 sql += f" WITH ({', '.join(with_parts)})"
         else:
             for record in values:
@@ -121,9 +141,7 @@ class EntityManager(BaseResourceManager[Entity]):
                 if with_params:
                     with_parts = []
                     for key, value in with_params.items():
-                        with_parts.append(
-                            f"'{key}' = {self._escape_string(str(value))}"
-                        )
+                        with_parts.append(self._format_with_param(key, value))
                     single_sql += f" WITH ({', '.join(with_parts)})"
 
                 await self._execute_sql(single_sql)

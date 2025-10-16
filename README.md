@@ -204,12 +204,35 @@ async def context_example(client):
 
 ```python
 async def entity_example(client):
+    # Create entity with default parameters
+    await client.entities.create(
+        name="simple_entity",
+        store="my_kafka",
+    )
+    
+    # Create entity with custom Kafka configurations
     await client.entities.create(
         name="user_profiles",
         store="my_kafka",
-        params={"topic.partitions": 3},
+        params={
+            "kafka.partitions": 3,
+            "kafka.replicas": 2,
+            "kafka.topic.retention.ms": "604800000",  # 7 days
+        },
+    )
+    
+    # Create entity with compact cleanup policy
+    await client.entities.create(
+        name="user_compact",
+        store="my_kafka",
+        params={
+            "kafka.partitions": 2,
+            "kafka.replicas": 1,
+            "kafka.topic.cleanup.policy": "compact",
+        },
     )
 
+    # Insert data into entity
     await client.entities.insert_values(
         name="user_profiles",
         values=[
@@ -219,6 +242,7 @@ async def entity_example(client):
         store="my_kafka",
     )
 
+    # List entities in a store
     entities = await client.entities.list_entities(store="my_kafka")
 ```
 
