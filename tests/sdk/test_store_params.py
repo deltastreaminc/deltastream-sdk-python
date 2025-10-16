@@ -9,11 +9,13 @@ def test_kafka_store():
     """Test Kafka store parameters."""
     params = StoreCreateParams(
         name="kafka_store",
-        store_type="KAFKA",
-        uris="kafka:9092",
-        kafka_sasl_hash_function="PLAIN",
-        kafka_sasl_username="user",
-        kafka_sasl_password="pass",
+        type="KAFKA",
+        parameters={
+            "uris": "kafka:9092",
+            "kafka.sasl.hash_function": "PLAIN",
+            "kafka.sasl.username": "user",
+            "kafka.sasl.password": "pass",
+        },
     )
     sql = params.to_with_clause().to_sql()
     assert "'type' = KAFKA" in sql
@@ -25,9 +27,11 @@ def test_kinesis_store():
     """Test Kinesis store parameters."""
     params = StoreCreateParams(
         name="kinesis_store",
-        store_type="KINESIS",
-        uris="https://kinesis.amazonaws.com",
-        kinesis_iam_role_arn="arn:aws:iam::123456789012:role/my-role",
+        type="KINESIS",
+        parameters={
+            "uris": "https://kinesis.amazonaws.com",
+            "kinesis.iam_role_arn": "arn:aws:iam::123456789012:role/my-role",
+        },
     )
     sql = params.to_with_clause().to_sql()
     assert "'type' = KINESIS" in sql
@@ -39,13 +43,15 @@ def test_snowflake_store():
     """Test Snowflake store parameters."""
     params = StoreCreateParams(
         name="snowflake_store",
-        store_type="SNOWFLAKE",
-        uris="https://account.snowflakecomputing.com",
-        snowflake_account_id="my-account",
-        snowflake_role_name="ACCOUNTADMIN",
-        snowflake_username="user",
-        snowflake_warehouse_name="WAREHOUSE",
-        snowflake_client_key_file="@/path/to/key.pem",
+        type="SNOWFLAKE",
+        parameters={
+            "uris": "https://account.snowflakecomputing.com",
+            "snowflake.account_id": "my-account",
+            "snowflake.role_name": "ACCOUNTADMIN",
+            "snowflake.username": "user",
+            "snowflake.warehouse_name": "WAREHOUSE",
+            "snowflake.client.key_file": "@/path/to/key.pem",
+        },
     )
     sql = params.to_with_clause().to_sql()
     assert "'type' = SNOWFLAKE" in sql
@@ -58,14 +64,16 @@ def test_databricks_store():
     """Test Databricks store parameters."""
     params = StoreCreateParams(
         name="databricks_store",
-        store_type="DATABRICKS",
-        uris="https://dbc-123.cloud.databricks.com",
-        databricks_app_token="token",
-        databricks_warehouse_id="warehouse-id",
-        aws_access_key_id="key",
-        aws_secret_access_key="secret",
-        databricks_cloud_s3_bucket="bucket",
-        databricks_cloud_region="AWS us-west-2",
+        type="DATABRICKS",
+        parameters={
+            "uris": "https://dbc-123.cloud.databricks.com",
+            "databricks.app_token": "token",
+            "databricks.warehouse_id": "warehouse-id",
+            "aws.access_key_id": "key",
+            "aws.secret_access_key": "secret",
+            "databricks.cloud.s3.bucket": "bucket",
+            "databricks.cloud.region": "AWS us-west-2",
+        },
     )
     sql = params.to_with_clause().to_sql()
     assert "'type' = DATABRICKS" in sql
@@ -78,12 +86,14 @@ def test_postgresql_store():
     """Test PostgreSQL store parameters."""
     params = StoreCreateParams(
         name="postgres_store",
-        store_type="POSTGRESQL",
-        uris="postgresql://host:5432/db",
-        postgres_username="user",
-        postgres_password="pass",
-        tls_verify_server_hostname=True,
-        tls_disabled=False,
+        type="POSTGRESQL",
+        parameters={
+            "uris": "postgresql://host:5432/db",
+            "postgres.username": "user",
+            "postgres.password": "pass",
+            "tls.verify_server_hostname": "TRUE",
+            "tls.disabled": "FALSE",
+        },
     )
     sql = params.to_with_clause().to_sql()
     assert "'type' = POSTGRESQL" in sql
@@ -96,10 +106,12 @@ def test_clickhouse_store():
     """Test ClickHouse store parameters."""
     params = StoreCreateParams(
         name="clickhouse_store",
-        store_type="CLICKHOUSE",
-        uris="jdbc:clickhouse://host:8443",
-        clickhouse_username="user",
-        clickhouse_password="pass",
+        type="CLICKHOUSE",
+        parameters={
+            "uris": "jdbc:clickhouse://host:8443",
+            "clickhouse.username": "user",
+            "clickhouse.password": "pass",
+        },
     )
     sql = params.to_with_clause().to_sql()
     assert "'type' = CLICKHOUSE" in sql
@@ -111,10 +123,12 @@ def test_s3_store():
     """Test S3 store parameters."""
     params = StoreCreateParams(
         name="s3_store",
-        store_type="S3",
-        uris="https://bucket.s3.amazonaws.com/",
-        aws_iam_role_arn="arn:aws:iam::123456789012:role/my-role",
-        aws_iam_external_id="external-id",
+        type="S3",
+        parameters={
+            "uris": "https://bucket.s3.amazonaws.com/",
+            "aws.iam_role_arn": "arn:aws:iam::123456789012:role/my-role",
+            "aws.iam_external_id": "external-id",
+        },
     )
     sql = params.to_with_clause().to_sql()
     assert "'type' = S3" in sql
@@ -127,12 +141,14 @@ def test_iceberg_rest_store():
     """Test Iceberg REST Catalog store parameters."""
     params = StoreCreateParams(
         name="iceberg_rest_store",
-        store_type="ICEBERG_REST",
-        uris="https://catalog.com/api",
-        iceberg_catalog_id="catalog-id",
-        iceberg_rest_client_id="client-id",
-        iceberg_rest_client_secret="secret",
-        iceberg_rest_client_scope="scope",
+        type="ICEBERG_REST",
+        parameters={
+            "uris": "https://catalog.com/api",
+            "iceberg.catalog.id": "catalog-id",
+            "iceberg.rest.client_id": "client-id",
+            "iceberg.rest.client_secret": "secret",
+            "iceberg.rest.client_scope": "scope",
+        },
     )
     sql = params.to_with_clause().to_sql()
     assert "'type' = ICEBERG_REST" in sql
@@ -142,12 +158,12 @@ def test_iceberg_rest_store():
 
 
 def test_additional_properties():
-    """Test that additional_properties works correctly."""
+    """Test that properties dict works correctly."""
     params = StoreCreateParams(
         name="custom_store",
-        store_type="KAFKA",
-        uris="kafka:9092",
-        additional_properties={
+        type="KAFKA",
+        parameters={
+            "uris": "kafka:9092",
             "custom.parameter": "custom_value",
             "override.something": "override_value",
         },
@@ -162,13 +178,15 @@ def test_tls_parameters():
     """Test TLS configuration parameters."""
     params = StoreCreateParams(
         name="secure_store",
-        store_type="KAFKA",
-        uris="kafka:9092",
-        tls_disabled=False,
-        tls_verify_server_hostname=True,
-        tls_ca_cert_file="@/path/to/ca.pem",
-        tls_cipher_suites="TLS_AES_256_GCM_SHA384",
-        tls_protocols="TLSv1.2,TLSv1.3",
+        type="KAFKA",
+        parameters={
+            "uris": "kafka:9092",
+            "tls.disabled": "FALSE",
+            "tls.verify_server_hostname": "TRUE",
+            "tls.ca_cert_file": "@/path/to/ca.pem",
+            "tls.cipher_suites": "TLS_AES_256_GCM_SHA384",
+            "tls.protocols": "TLSv1.2,TLSv1.3",
+        },
     )
     sql = params.to_with_clause().to_sql()
     assert "'tls.disabled' = FALSE" in sql

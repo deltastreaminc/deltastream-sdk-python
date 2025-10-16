@@ -153,27 +153,33 @@ async def store_example(client):
     # Create a Kafka store with PLAIN authentication
     kafka_store = await client.stores.create_kafka_store(
         name="my_kafka",
-        uris="localhost:9092",
-        kafka_sasl_hash_function="PLAIN",
-        kafka_sasl_username="user",
-        kafka_sasl_password="pass",
-        schema_registry_name="my_schema_registry",
+        params={
+            "uris": "localhost:9092",
+            "kafka.sasl.hash_function": "PLAIN",
+            "kafka.sasl.username": "user",
+            "kafka.sasl.password": "pass",
+            "schema_registry_name": "my_schema_registry",
+        },
     )
 
     # Create an S3 store with IAM role
     s3_store = await client.stores.create_s3_store(
         name="my_s3",
-        uris="https://mybucket.s3.amazonaws.com/",
-        aws_iam_role_arn="arn:aws:iam::123456789012:role/DeltaStreamRole",
-        aws_iam_external_id="external-id-123",
+        params={
+            "uris": "https://mybucket.s3.amazonaws.com/",
+            "aws.iam_role_arn": "arn:aws:iam::123456789012:role/DeltaStreamRole",
+            "aws.iam_external_id": "external-id-123",
+        },
     )
 
     # Create a Kinesis store
     kinesis_store = await client.stores.create_kinesis_store(
         name="my_kinesis",
-        uris="https://kinesis.us-east-1.amazonaws.com",
-        kinesis_access_key_id="AKIAIOSFODNN7EXAMPLE",
-        kinesis_secret_access_key="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+        params={
+            "uris": "https://kinesis.us-east-1.amazonaws.com",
+            "kinesis.access_key_id": "AKIAIOSFODNN7EXAMPLE",
+            "kinesis.secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+        },
     )
 
     # List topics from a store

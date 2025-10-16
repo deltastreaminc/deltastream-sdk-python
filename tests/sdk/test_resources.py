@@ -267,10 +267,12 @@ class TestStoreManager:
 
         await manager.create_kafka_store(
             name="kafka_store",
-            uris="localhost:9092",
-            kafka_sasl_hash_function="PLAIN",
-            kafka_sasl_username="user",
-            kafka_sasl_password="pass",
+            params={
+                "uris": "localhost:9092",
+                "kafka.sasl.hash_function": "PLAIN",
+                "kafka.sasl.username": "user",
+                "kafka.sasl.password": "pass",
+            },
         )
 
         call_args = mock_connection.exec.call_args[0][0]
@@ -297,9 +299,11 @@ class TestStoreManager:
 
         await manager.create_kinesis_store(
             name="kinesis_store",
-            uris="https://kinesis.us-east-1.amazonaws.com",
-            kinesis_access_key_id="ACCESS_KEY",
-            kinesis_secret_access_key="SECRET_KEY",
+            params={
+                "uris": "https://kinesis.us-east-1.amazonaws.com",
+                "kinesis.access_key_id": "ACCESS_KEY",
+                "kinesis.secret_access_key": "SECRET_KEY",
+            },
         )
 
         call_args = mock_connection.exec.call_args[0][0]
@@ -325,9 +329,11 @@ class TestStoreManager:
 
         await manager.create_s3_store(
             name="s3_store",
-            uris="https://mybucket.s3.us-west-2.amazonaws.com/",
-            aws_access_key_id="ACCESS_KEY",
-            aws_secret_access_key="SECRET_KEY",
+            params={
+                "uris": "https://mybucket.s3.us-west-2.amazonaws.com/",
+                "aws.access_key_id": "ACCESS_KEY",
+                "aws.secret_access_key": "SECRET_KEY",
+            },
         )
 
         call_args = mock_connection.exec.call_args[0][0]
@@ -350,18 +356,6 @@ class TestStoreManager:
         expected_sql = 'TEST STORE "test_store";'
         mock_connection.query.assert_called_once_with(expected_sql)
         assert result == {"name": "test_stream"}
-
-    @pytest.mark.asyncio
-    async def test_get_topics(self, mock_connection, mock_list_result):
-        """Test getting store topics."""
-        manager = StoreManager(mock_connection)
-        mock_connection.query.return_value = mock_list_result(["topic1", "topic2"])
-
-        topics = await manager.get_topics("kafka_store")
-
-        expected_sql = 'LIST TOPICS FROM STORE "kafka_store";'
-        mock_connection.query.assert_called_once_with(expected_sql)
-        assert topics == ["topic1", "topic2"]
 
 
 class TestDatabaseManager:

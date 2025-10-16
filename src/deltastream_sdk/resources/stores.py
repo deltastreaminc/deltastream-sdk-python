@@ -2,7 +2,7 @@
 Store resource manager for DeltaStream SDK.
 """
 
-from typing import Optional, List, Dict, Any
+from typing import Dict, Any
 from .base import BaseResourceManager
 from ..models.stores import Store, StoreCreateParams, StoreUpdateParams
 
@@ -76,114 +76,84 @@ class StoreManager(BaseResourceManager[Store]):
         escaped_name = self._escape_identifier(name)
         return f"DROP STORE {escaped_name}"
 
+    async def _create_store_with_type(
+        self, name: str, store_type: str, **kwargs: Any
+    ) -> Store:
+        """
+        Internal helper to create a store of any type.
+
+        Args:
+            name: Name of the store
+            store_type: Type of the store (KAFKA, KINESIS, S3, etc.)
+            **kwargs: Additional parameters for the store
+
+        Returns:
+            Created Store object
+        """
+        params = StoreCreateParams(
+            name=name,
+            type=store_type,
+            parameters=kwargs if kwargs else None,
+        )
+        return await self.create(params=params)
+
     # Store-specific operations
     async def create_kafka_store(
-        self,
-        name: str,
-        uris: str,
-        kafka_sasl_hash_function: Optional[str] = None,
-        kafka_sasl_username: Optional[str] = None,
-        kafka_sasl_password: Optional[str] = None,
-        schema_registry_name: Optional[str] = None,
-        **kwargs,
+        self, name: str, params: Dict[str, Any] | None = None
     ) -> Store:
         """
         Create a Kafka data store.
 
         Args:
             name: Name of the store
-            uris: Comma-separated list of broker URIs (e.g., 'kafka:9092,kafka2:9092')
-            kafka_sasl_hash_function: SASL hash function (NONE, PLAIN, SHA256, SHA512, AWS_MSK_IAM)
-            kafka_sasl_username: Username for SASL authentication
-            kafka_sasl_password: Password for SASL authentication
-            schema_registry_name: Name of associated schema registry
-            **kwargs: Additional properties (e.g., tls_ca_cert_file, kafka_msk_aws_region)
+            params: Dictionary of store parameters using DeltaStream parameter names.
+                   Example: {"uris": "kafka:9092", "kafka.sasl.hash_function": "PLAIN",
+                   "kafka.sasl.username": "user", "kafka.sasl.password": "pass",
+                   "schema_registry_name": "my_registry", "tls.ca_cert_file": "@/path/to/ca.pem"}
 
         Returns:
             Created Store object
         """
-        params = StoreCreateParams(
-            name=name,
-            store_type="KAFKA",
-            uris=uris,
-            kafka_sasl_hash_function=kafka_sasl_hash_function,
-            kafka_sasl_username=kafka_sasl_username,
-            kafka_sasl_password=kafka_sasl_password,
-            schema_registry_name=schema_registry_name,
-            **kwargs,
-        )
-        return await self.create(params=params)
+        return await self._create_store_with_type(name, "KAFKA", **(params or {}))
 
     async def create_kinesis_store(
-        self,
-        name: str,
-        uris: str,
-        kinesis_access_key_id: Optional[str] = None,
-        kinesis_secret_access_key: Optional[str] = None,
-        kinesis_iam_role_arn: Optional[str] = None,
-        **kwargs,
+        self, name: str, params: Dict[str, Any] | None = None
     ) -> Store:
         """
         Create a Kinesis data store.
 
         Args:
             name: Name of the store
-            uris: Kinesis endpoint URI (e.g., 'https://kinesis.us-east-1.amazonaws.com')
-            kinesis_access_key_id: AWS access key for static credentials
-            kinesis_secret_access_key: AWS secret key for static credentials
-            kinesis_iam_role_arn: IAM role ARN for authentication
-            **kwargs: Additional properties
+            params: Dictionary of store parameters using DeltaStream parameter names.
+                   Example: {"uris": "https://kinesis.amazonaws.com",
+                   "kinesis.access_key_id": "ACCESS_KEY",
+                   "kinesis.secret_access_key": "SECRET_KEY",
+                   "kinesis.iam_role_arn": "arn:aws:iam::123456789012:role/MyRole"}
 
         Returns:
             Created Store object
         """
-        params = StoreCreateParams(
-            name=name,
-            store_type="KINESIS",
-            uris=uris,
-            kinesis_access_key_id=kinesis_access_key_id,
-            kinesis_secret_access_key=kinesis_secret_access_key,
-            kinesis_iam_role_arn=kinesis_iam_role_arn,
-            **kwargs,
-        )
-        return await self.create(params=params)
+        return await self._create_store_with_type(name, "KINESIS", **(params or {}))
 
     async def create_s3_store(
-        self,
-        name: str,
-        uris: str,
-        aws_access_key_id: Optional[str] = None,
-        aws_secret_access_key: Optional[str] = None,
-        aws_iam_role_arn: Optional[str] = None,
-        aws_iam_external_id: Optional[str] = None,
-        **kwargs,
+        self, name: str, params: Dict[str, Any] | None = None
     ) -> Store:
         """
         Create an S3 data store.
 
         Args:
             name: Name of the store
-            uris: S3 bucket URI (e.g., 'https://mybucket.s3.amazonaws.com/')
-            aws_access_key_id: AWS access key for static credentials
-            aws_secret_access_key: AWS secret key for static credentials
-            aws_iam_role_arn: IAM role ARN for authentication
-            aws_iam_external_id: External ID for IAM role assumption
-            **kwargs: Additional properties
+            params: Dictionary of store parameters using DeltaStream parameter names.
+                   Example: {"uris": "https://mybucket.s3.amazonaws.com/",
+                   "aws.access_key_id": "ACCESS_KEY",
+                   "aws.secret_access_key": "SECRET_KEY",
+                   "aws.iam_role_arn": "arn:aws:iam::123456789012:role/MyRole",
+                   "aws.iam_external_id": "external-id"}
 
         Returns:
             Created Store object
         """
-        params = StoreCreateParams(
-            name=name,
-            store_type="S3",
-            uris=uris,
-            aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key,
-            aws_iam_role_arn=aws_iam_role_arn,
-            aws_iam_external_id=aws_iam_external_id,
-            **kwargs,
-        )
-        return await self.create(params=params)
+        return await self._create_store_with_type(name, "S3", **(params or {}))
 
     async def test_connection(self, name: str) -> Dict[str, Any]:
         """Test the connection to a data store."""
@@ -191,10 +161,3 @@ class StoreManager(BaseResourceManager[Store]):
         sql = f"TEST STORE {escaped_name}"
         results = await self._query_sql(sql)
         return results[0] if results else {"status": "unknown"}
-
-    async def get_topics(self, name: str) -> List[str]:
-        """Get list of topics/streams available in the store."""
-        escaped_name = self._escape_identifier(name)
-        sql = f"LIST TOPICS FROM STORE {escaped_name}"
-        results = await self._query_sql(sql)
-        return [result.get("topic_name", result.get("name", "")) for result in results]

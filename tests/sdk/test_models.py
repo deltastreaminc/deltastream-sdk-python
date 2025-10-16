@@ -123,7 +123,7 @@ class TestStoreModel:
 
         assert store.name == "test_store"
         assert store.owner == "test_user"
-        assert store.store_type == "KAFKA"
+        assert store.parameters.get("store_type") == "KAFKA"
 
     def test_from_dict_minimal(self):
         """Test creating Store from minimal data."""
@@ -132,7 +132,7 @@ class TestStoreModel:
         store = Store.from_dict(minimal_data)
 
         assert store.name == "minimal_store"
-        assert store.store_type is None
+        assert store.parameters.get("store_type") is None
 
 
 class TestDatabaseModel:
@@ -269,11 +269,13 @@ class TestCreateParamsModels:
         """Test StoreCreateParams to WITH clause conversion."""
         params = StoreCreateParams(
             name="test_store",
-            store_type="KAFKA",
-            uris="localhost:9092",
-            kafka_sasl_hash_function="PLAIN",
-            kafka_sasl_username="user",
-            kafka_sasl_password="pass",
+            type="KAFKA",
+            parameters={
+                "uris": "localhost:9092",
+                "kafka.sasl.hash_function": "PLAIN",
+                "kafka.sasl.username": "user",
+                "kafka.sasl.password": "pass",
+            },
         )
 
         with_clause = params.to_with_clause()
@@ -287,12 +289,12 @@ class TestCreateParamsModels:
         assert "'kafka.sasl.password' = 'pass'" in sql
 
     def test_store_create_params_with_additional_properties(self):
-        """Test StoreCreateParams with additional_properties."""
+        """Test StoreCreateParams with properties dict."""
         params = StoreCreateParams(
             name="test_store",
-            store_type="KAFKA",
-            uris="localhost:9092",
-            additional_properties={
+            type="KAFKA",
+            parameters={
+                "uris": "localhost:9092",
                 "custom.param": "custom_value",
                 "another.param": "another_value",
             },
@@ -310,9 +312,11 @@ class TestCreateParamsModels:
         """Test StoreCreateParams for Kinesis with IAM role."""
         params = StoreCreateParams(
             name="kinesis_store",
-            store_type="KINESIS",
-            uris="https://url.to.kinesis.aws:4566",
-            kinesis_iam_role_arn="arn:aws:iam::123456789012:role/example-IAM-role",
+            type="KINESIS",
+            parameters={
+                "uris": "https://url.to.kinesis.aws:4566",
+                "kinesis.iam_role_arn": "arn:aws:iam::123456789012:role/example-IAM-role",
+            },
         )
 
         with_clause = params.to_with_clause()
@@ -329,13 +333,15 @@ class TestCreateParamsModels:
         """Test StoreCreateParams for Snowflake."""
         params = StoreCreateParams(
             name="snowflake_store",
-            store_type="SNOWFLAKE",
-            uris="https://my-account.snowflakecomputing.com",
-            snowflake_account_id="my-account",
-            snowflake_role_name="ACCOUNTADMIN",
-            snowflake_username="STREAMING_USER",
-            snowflake_warehouse_name="COMPUTE_WH",
-            snowflake_client_key_file="@/path/to/pk/my_account_rsa.p8",
+            type="SNOWFLAKE",
+            parameters={
+                "uris": "https://my-account.snowflakecomputing.com",
+                "snowflake.account_id": "my-account",
+                "snowflake.role_name": "ACCOUNTADMIN",
+                "snowflake.username": "STREAMING_USER",
+                "snowflake.warehouse_name": "COMPUTE_WH",
+                "snowflake.client.key_file": "@/path/to/pk/my_account_rsa.p8",
+            },
         )
 
         with_clause = params.to_with_clause()
