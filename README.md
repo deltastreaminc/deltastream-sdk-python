@@ -153,7 +153,7 @@ async def store_example(client):
     # Create a Kafka store with PLAIN authentication
     kafka_store = await client.stores.create_kafka_store(
         name="my_kafka",
-        params={
+        parameters={
             "uris": "localhost:9092",
             "kafka.sasl.hash_function": "PLAIN",
             "kafka.sasl.username": "user",
@@ -165,7 +165,7 @@ async def store_example(client):
     # Create an S3 store with IAM role
     s3_store = await client.stores.create_s3_store(
         name="my_s3",
-        params={
+        parameters={
             "uris": "https://mybucket.s3.amazonaws.com/",
             "aws.iam_role_arn": "arn:aws:iam::123456789012:role/DeltaStreamRole",
             "aws.iam_external_id": "external-id-123",
@@ -175,7 +175,7 @@ async def store_example(client):
     # Create a Kinesis store
     kinesis_store = await client.stores.create_kinesis_store(
         name="my_kinesis",
-        params={
+        parameters={
             "uris": "https://kinesis.us-east-1.amazonaws.com",
             "kinesis.access_key_id": "AKIAIOSFODNN7EXAMPLE",
             "kinesis.secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
@@ -217,7 +217,7 @@ async def entity_example(client):
     await client.entities.create(
         name="user_profiles",
         store="my_kafka",
-        params={
+        parameters={
             "kafka.partitions": 3,
             "kafka.replicas": 2,
             "kafka.topic.retention.ms": "604800000",  # 7 days
@@ -228,7 +228,7 @@ async def entity_example(client):
     await client.entities.create(
         name="user_compact",
         store="my_kafka",
-        params={
+        parameters={
             "kafka.partitions": 2,
             "kafka.replicas": 1,
             "kafka.topic.cleanup.policy": "compact",

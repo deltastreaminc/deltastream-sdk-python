@@ -95,6 +95,7 @@ class BaseModel:
 
         return None
 
+
 class WithClause:
     """Represents a WITH clause for DeltaStream SQL statements."""
 
@@ -143,6 +144,6 @@ class WithClause:
         return f"WITH ({', '.join(params)})"
 
     @classmethod
-    def from_dict(cls, params: Dict[str, str]) -> "WithClause":
+    def from_dict(cls, parameters: Dict[str, str]) -> "WithClause":
         """Create WithClause from parameter dictionary."""
-        return cls(parameters=params)
+        return cls(parameters=parameters)

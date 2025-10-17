@@ -49,15 +49,15 @@ class ComputePoolCreateParams:
 
     def to_with_clause(self) -> WithClause:
         """Convert parameters to DeltaStream WITH clause."""
-        params = {
+        parameters = {
             "size": self.size,
             "min.units": str(self.min_units),
             "max.units": str(self.max_units),
             "auto.suspend": str(self.auto_suspend).lower(),
         }
         if self.auto_suspend_minutes is not None:
-            params["auto.suspend.minutes"] = str(self.auto_suspend_minutes)
-        return WithClause(parameters=params)
+            parameters["auto.suspend.minutes"] = str(self.auto_suspend_minutes)
+        return WithClause(parameters=parameters)
 
 
 @dataclass
@@ -72,17 +72,17 @@ class ComputePoolUpdateParams:
 
     def to_with_clause(self) -> WithClause:
         """Convert update parameters to WITH clause."""
-        params = {}
+        parameters = {}
 
         if self.size:
-            params["size"] = self.size
+            parameters["size"] = self.size
         if self.min_units is not None:
-            params["min.units"] = str(self.min_units)
+            parameters["min.units"] = str(self.min_units)
         if self.max_units is not None:
-            params["max.units"] = str(self.max_units)
+            parameters["max.units"] = str(self.max_units)
         if self.auto_suspend is not None:
-            params["auto.suspend"] = str(self.auto_suspend).lower()
+            parameters["auto.suspend"] = str(self.auto_suspend).lower()
         if self.auto_suspend_minutes is not None:
-            params["auto.suspend.minutes"] = str(self.auto_suspend_minutes)
+            parameters["auto.suspend.minutes"] = str(self.auto_suspend_minutes)
 
-        return WithClause(parameters=params)
+        return WithClause(parameters=parameters)

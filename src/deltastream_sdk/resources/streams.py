@@ -7,7 +7,6 @@ from .base import BaseResourceManager
 from ..models.streams import (
     Stream,
     StreamCreateParams,
-    StreamUpdateParams,
 )
 from ..exceptions import InvalidConfiguration
 
@@ -89,12 +88,6 @@ class StreamManager(BaseResourceManager[Stream]):
         """Generate SQL for updating a stream."""
         # DeltaStream typically doesn't support direct stream updates
         # You would need to recreate the stream or use specific update commands
-        escaped_name = self._escape_identifier(name)
-
-        if isinstance(params.get("params"), StreamUpdateParams):
-            update_params = params["params"]
-        else:
-            update_params = StreamUpdateParams(**params)
 
         raise InvalidConfiguration("Stream updates are limited in DeltaStream")
 

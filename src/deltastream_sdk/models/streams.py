@@ -3,7 +3,7 @@ Stream models for DeltaStream SDK.
 """
 
 from dataclasses import dataclass
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Any
 from .base import BaseModel, WithClause
 
 
@@ -21,7 +21,7 @@ class Stream(BaseModel):
         return self._data.get("State")
 
     @property
-    def properties(self) -> Optional[Dict]:
+    def properties(self) -> Optional[Dict[str, Any]]:
         """Get the properties."""
         return self._data.get("Properties")
 
@@ -104,9 +104,9 @@ class StreamUpdateParams:
 
     def to_with_clause(self) -> WithClause:
         """Convert update parameters to WITH clause."""
-        params = {}
+        parameters = {}
 
         if self.additional_properties:
-            params.update(self.additional_properties)
+            parameters.update(self.additional_properties)
 
-        return WithClause(parameters=params)
+        return WithClause(parameters=parameters)

@@ -261,7 +261,7 @@ class TestStoreManager:
 
         await manager.create_kafka_store(
             name="kafka_store",
-            params={
+            parameters={
                 "uris": "localhost:9092",
                 "kafka.sasl.hash_function": "PLAIN",
                 "kafka.sasl.username": "user",
@@ -293,7 +293,7 @@ class TestStoreManager:
 
         await manager.create_kinesis_store(
             name="kinesis_store",
-            params={
+            parameters={
                 "uris": "https://kinesis.us-east-1.amazonaws.com",
                 "kinesis.access_key_id": "ACCESS_KEY",
                 "kinesis.secret_access_key": "SECRET_KEY",
@@ -323,7 +323,7 @@ class TestStoreManager:
 
         await manager.create_s3_store(
             name="s3_store",
-            params={
+            parameters={
                 "uris": "https://mybucket.s3.us-west-2.amazonaws.com/",
                 "aws.access_key_id": "ACCESS_KEY",
                 "aws.secret_access_key": "SECRET_KEY",
@@ -429,7 +429,7 @@ class TestDatabaseManager:
 
         await manager.update("test_db")
 
-        expected_sql = "-- No updates specified for database \"test_db\";"
+        expected_sql = '-- No updates specified for database "test_db";'
         mock_connection.exec.assert_called_once_with(expected_sql)
 
     @pytest.mark.asyncio

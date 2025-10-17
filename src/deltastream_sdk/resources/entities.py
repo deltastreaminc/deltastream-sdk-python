@@ -48,7 +48,11 @@ class EntityManager(BaseResourceManager[Entity]):
         if isinstance(params.get("params"), EntityCreateParams):
             create_params = params["params"]
         else:
-            create_params = EntityCreateParams(**params)
+            # Rename "params" to "parameters" for the dataclass
+            create_kwargs = params.copy()
+            if "params" in create_kwargs:
+                create_kwargs["parameters"] = create_kwargs.pop("params")
+            create_params = EntityCreateParams(**create_kwargs)
 
         name = self._escape_identifier(create_params.name)
         sql = f"CREATE ENTITY {name}"
@@ -59,8 +63,8 @@ class EntityManager(BaseResourceManager[Entity]):
 
         with_parts = []
 
-        if create_params.params:
-            for key, value in create_params.params.items():
+        if create_params.parameters:
+            for key, value in create_params.parameters.items():
                 with_parts.append(self._format_with_param(key, value))
 
         if with_parts:

@@ -79,7 +79,7 @@ async def ensure_entity(client: DeltaStreamClient, entity_name: str, target_stor
             await client.entities.create(
                 name=entity_name,
                 store=target_store.name,
-                params={
+                parameters={
                     "kafka.partitions": 1,
                     "kafka.replicas": 1,
                     "kafka.topic.retention.ms": "604800000",  # 7 days

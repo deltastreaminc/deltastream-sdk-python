@@ -31,14 +31,14 @@ class SchemaRegistryCreateParams:
 
     def to_with_clause(self) -> WithClause:
         """Convert parameters to DeltaStream WITH clause."""
-        params = {"url": self.url}
+        parameters = {"url": self.url}
         if self.auth_type:
-            params["auth.type"] = self.auth_type
+            parameters["auth.type"] = self.auth_type
         if self.username:
-            params["username"] = self.username
+            parameters["username"] = self.username
         if self.password:
-            params["password"] = self.password
-        return WithClause(parameters=params)
+            parameters["password"] = self.password
+        return WithClause(parameters=parameters)
 
 
 @dataclass
@@ -51,11 +51,11 @@ class SchemaRegistryUpdateParams:
 
     def to_with_clause(self) -> WithClause:
         """Convert update parameters to WITH clause."""
-        params = {}
+        parameters = {}
         if self.url:
-            params["url"] = self.url
+            parameters["url"] = self.url
         if self.username:
-            params["username"] = self.username
+            parameters["username"] = self.username
         if self.password:
-            params["password"] = self.password
-        return WithClause(parameters=params)
+            parameters["password"] = self.password
+        return WithClause(parameters=parameters)

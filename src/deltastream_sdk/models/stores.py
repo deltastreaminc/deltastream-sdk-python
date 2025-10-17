@@ -42,13 +42,13 @@ class StoreCreateParams:
         """
         Convert parameters to DeltaStream WITH clause.
         """
-        params = {"type": self.type}
+        parameters = {"type": self.type}
 
         # Add all parameters
         if self.parameters:
-            params.update(self.parameters)
+            parameters.update(self.parameters)
 
-        return WithClause(parameters=params)
+        return WithClause(parameters=parameters)
 
 
 @dataclass
@@ -59,9 +59,9 @@ class StoreUpdateParams:
 
     def to_with_clause(self) -> WithClause:
         """Convert update parameters to WITH clause."""
-        params = {}
+        parameters = {}
 
         if self.parameters:
-            params.update(self.parameters)
+            parameters.update(self.parameters)
 
-        return WithClause(parameters=params)
+        return WithClause(parameters=parameters)

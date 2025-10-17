@@ -76,7 +76,7 @@ class DeFiEventGenerator:
                     await self.client.entities.create(
                         name=entity_name,
                         store=self.store_name,
-                        params={
+                        parameters={
                             "kafka.partitions": 3,
                             "kafka.replicas": 1,
                             "kafka.topic.retention.ms": "604800000",  # 7 days

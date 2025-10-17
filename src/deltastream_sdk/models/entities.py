@@ -20,7 +20,9 @@ class EntityCreateParams:
 
     name: str
     store: Optional[str] = None
-    params: Optional[Dict[str, Any]] = None  # Parameters like {"topic.partitions": 1}
+    parameters: Optional[Dict[str, Any]] = (
+        None  # Parameters like {"topic.partitions": 1}
+    )
 
 
 @dataclass
