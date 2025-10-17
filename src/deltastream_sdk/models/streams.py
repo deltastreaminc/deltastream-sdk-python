@@ -25,14 +25,6 @@ class Stream(BaseModel):
         """Get the properties."""
         return self._data.get("Properties")
 
-    @property
-    def row_key(self) -> Optional[str]:
-        """Get the row key."""
-        for field in ("row_key", "rowkey", "Row Key"):
-            if field in self._data:
-                return self._data[field]
-        return None
-
 
 @dataclass
 class StreamCreateParams:
@@ -56,7 +48,6 @@ class StreamCreateParams:
 
     # Advanced configuration
     timestamp_column: Optional[str] = None
-    row_key: Optional[str] = None
 
     # Error handling
     error_handling: Optional[str] = None  # 'TERMINATE', 'IGNORE', 'IGNORE_AND_LOG'
@@ -80,8 +71,6 @@ class StreamCreateParams:
             params["value.format"] = self.value_format
         if self.timestamp_column:
             params["timestamp"] = self.timestamp_column
-        if self.row_key:
-            params["row.key"] = self.row_key
         if self.error_handling:
             params["source.deserialization.error.handling"] = self.error_handling
         if self.error_log_topic:

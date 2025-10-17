@@ -11,6 +11,11 @@ class Store(BaseModel):
     """Model representing a DeltaStream data store."""
 
     @property
+    def is_default(self) -> Optional[bool]:
+        """Check if this store is the default store."""
+        return self._data.get("IsDefault")
+
+    @property
     def parameters(self) -> Dict[str, Any]:
         """Get all store parameters (excluding base fields)."""
         # Return all fields except the base model fields

@@ -65,7 +65,7 @@ class BaseResourceManager(ABC, Generic[T]):
 
             # Convert DESCRIBE results to a single dictionary
             resource_dict = self._convert_describe_to_dict(results)
-            # Ensure the resource has a name (using PascalCase as per API)
+            # Ensure the resource has a name
             if "Name" not in resource_dict:
                 resource_dict["Name"] = name
 
