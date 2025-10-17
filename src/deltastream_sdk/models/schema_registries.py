@@ -5,13 +5,18 @@ from typing import Optional
 from .base import BaseModel, WithClause
 
 
-@dataclass
 class SchemaRegistry(BaseModel):
     """Model representing a DeltaStream schema registry."""
 
-    registry_type: Optional[str] = None
-    url: Optional[str] = None
-    auth_type: Optional[str] = None
+    @property
+    def registry_type(self) -> Optional[str]:
+        """Get the registry type."""
+        return self._data.get("Type")
+
+    @property
+    def url(self) -> Optional[str]:
+        """Get the URL."""
+        return self._data.get("Url")
 
 
 @dataclass
@@ -23,7 +28,6 @@ class SchemaRegistryCreateParams:
     auth_type: Optional[str] = None
     username: Optional[str] = None
     password: Optional[str] = None
-    comment: Optional[str] = None
 
     def to_with_clause(self) -> WithClause:
         """Convert parameters to DeltaStream WITH clause."""
@@ -44,7 +48,6 @@ class SchemaRegistryUpdateParams:
     url: Optional[str] = None
     username: Optional[str] = None
     password: Optional[str] = None
-    comment: Optional[str] = None
 
     def to_with_clause(self) -> WithClause:
         """Convert update parameters to WITH clause."""

@@ -53,8 +53,6 @@ class StreamManager(BaseResourceManager[Stream]):
         if create_params.sql_definition:
             # CREATE STREAM AS SELECT style
             sql = f"CREATE STREAM {name}"
-            if create_params.comment:
-                sql += f" COMMENT {self._escape_string(create_params.comment)}"
 
             sql += f" AS {create_params.sql_definition}"
 
@@ -75,9 +73,6 @@ class StreamManager(BaseResourceManager[Stream]):
                 column_defs.append(f"{col_name} {col_type}")
 
             sql += ", ".join(column_defs) + ")"
-
-            if create_params.comment:
-                sql += f" COMMENT {self._escape_string(create_params.comment)}"
 
             # Add WITH clause
             with_clause = create_params.to_with_clause()
@@ -100,10 +95,6 @@ class StreamManager(BaseResourceManager[Stream]):
             update_params = params["params"]
         else:
             update_params = StreamUpdateParams(**params)
-
-        # For now, we'll focus on comment updates
-        if update_params.comment:
-            return f"ALTER STREAM {escaped_name} SET COMMENT {self._escape_string(update_params.comment)}"
 
         raise InvalidConfiguration("Stream updates are limited in DeltaStream")
 

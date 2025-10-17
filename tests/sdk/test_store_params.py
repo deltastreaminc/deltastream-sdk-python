@@ -20,7 +20,6 @@ def test_kafka_store():
     sql = params.to_with_clause().to_sql()
     assert "'type' = KAFKA" in sql
     assert "'kafka.sasl.hash_function' = PLAIN" in sql
-    print("✅ Kafka store test passed")
 
 
 def test_kinesis_store():
@@ -36,7 +35,6 @@ def test_kinesis_store():
     sql = params.to_with_clause().to_sql()
     assert "'type' = KINESIS" in sql
     assert "'kinesis.iam_role_arn'" in sql
-    print("✅ Kinesis store test passed")
 
 
 def test_snowflake_store():
@@ -57,7 +55,6 @@ def test_snowflake_store():
     assert "'type' = SNOWFLAKE" in sql
     assert "'snowflake.account_id'" in sql
     assert "'snowflake.client.key_file'" in sql
-    print("✅ Snowflake store test passed")
 
 
 def test_databricks_store():
@@ -79,7 +76,6 @@ def test_databricks_store():
     assert "'type' = DATABRICKS" in sql
     assert "'databricks.app_token'" in sql
     assert "'databricks.cloud.s3.bucket'" in sql
-    print("✅ Databricks store test passed")
 
 
 def test_postgresql_store():
@@ -99,7 +95,6 @@ def test_postgresql_store():
     assert "'type' = POSTGRESQL" in sql
     assert "'postgres.username'" in sql
     assert "'tls.verify_server_hostname' = TRUE" in sql
-    print("✅ PostgreSQL store test passed")
 
 
 def test_clickhouse_store():
@@ -116,7 +111,6 @@ def test_clickhouse_store():
     sql = params.to_with_clause().to_sql()
     assert "'type' = CLICKHOUSE" in sql
     assert "'clickhouse.username'" in sql
-    print("✅ ClickHouse store test passed")
 
 
 def test_s3_store():
@@ -134,7 +128,6 @@ def test_s3_store():
     assert "'type' = S3" in sql
     assert "'aws.iam_role_arn'" in sql
     assert "'aws.iam_external_id'" in sql
-    print("✅ S3 store test passed")
 
 
 def test_iceberg_rest_store():
@@ -154,7 +147,6 @@ def test_iceberg_rest_store():
     assert "'type' = ICEBERG_REST" in sql
     assert "'iceberg.catalog.id'" in sql
     assert "'iceberg.rest.client_id'" in sql
-    print("✅ Iceberg REST store test passed")
 
 
 def test_additional_properties():
@@ -171,7 +163,6 @@ def test_additional_properties():
     sql = params.to_with_clause().to_sql()
     assert "'custom.parameter' = 'custom_value'" in sql
     assert "'override.something' = 'override_value'" in sql
-    print("✅ Additional properties test passed")
 
 
 def test_tls_parameters():
@@ -194,12 +185,9 @@ def test_tls_parameters():
     assert "'tls.ca_cert_file'" in sql
     assert "'tls.cipher_suites'" in sql
     assert "'tls.protocols'" in sql
-    print("✅ TLS parameters test passed")
 
 
 if __name__ == "__main__":
-    print("Testing StoreCreateParams with documented parameters...\n")
-
     test_kafka_store()
     test_kinesis_store()
     test_snowflake_store()
@@ -210,6 +198,3 @@ if __name__ == "__main__":
     test_iceberg_rest_store()
     test_additional_properties()
     test_tls_parameters()
-
-    print("\n🎉 All store type tests passed!")
-    print("\nAll parameters match DeltaStream CREATE STORE documentation.")

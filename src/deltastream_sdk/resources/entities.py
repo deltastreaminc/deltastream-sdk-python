@@ -180,17 +180,8 @@ class EntityManager(BaseResourceManager[Entity]):
             results = await self._query_sql(sql)
             entities = []
             for result in results:
-                # Create Entity with the information from LIST ENTITIES
-                entity = Entity(
-                    name=result.get("Name", result.get("name", "")),
-                    # Add is_leaf information if available
-                )
-                # Add any additional properties from the result
-                if "Is Leaf" in result:
-                    entity.is_leaf = result["Is Leaf"]
-                elif "is_leaf" in result:
-                    entity.is_leaf = result["is_leaf"]
-
+                # Create Entity with the full result data
+                entity = Entity(data=result)
                 entities.append(entity)
             return entities
         except Exception as e:

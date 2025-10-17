@@ -180,22 +180,16 @@ class TestStreamManager:
     async def test_update_stream(
         self, mock_connection, mock_describe_result, sample_stream_data
     ):
-        """Test updating stream."""
+        """Test that updating stream raises SQLError with InvalidConfiguration."""
         manager = StreamManager(mock_connection)
 
-        # Mock the query call for get() after update
-        mock_connection.query.return_value = mock_describe_result(
-            "stream", sample_stream_data
-        )
-
         from deltastream_sdk.models import StreamUpdateParams
+        from deltastream_sdk.exceptions import SQLError
 
-        params = StreamUpdateParams(comment="Updated comment")
+        params = StreamUpdateParams()
 
-        await manager.update("test_stream", params)
-
-        expected_sql = "ALTER STREAM \"test_stream\" SET COMMENT 'Updated comment';"
-        mock_connection.exec.assert_called_once_with(expected_sql)
+        with pytest.raises(SQLError, match="Stream updates are limited"):
+            await manager.update("test_stream", params)
 
     @pytest.mark.asyncio
     async def test_delete_stream(self, mock_connection):
@@ -370,16 +364,16 @@ class TestDatabaseManager:
 
         # Mock the query call for get() after creation
         test_db_data = sample_database_data.copy()
-        test_db_data["name"] = "test_db"
+        test_db_data["Name"] = "test_db"  # Use PascalCase for API field names
         mock_connection.query.return_value = mock_describe_result(
             "database", test_db_data
         )
 
-        await manager.create(name="test_db", comment="Test database")
+        # Note: comment parameter is ignored as it's not supported by DeltaStream API
+        await manager.create(name="test_db")
 
         call_args = mock_connection.exec.call_args[0][0]
         assert 'CREATE DATABASE "test_db"' in call_args
-        assert "COMMENT 'Test database'" in call_args
 
     @pytest.mark.asyncio
     async def test_create_database_minimal(
@@ -423,7 +417,7 @@ class TestDatabaseManager:
     async def test_update_database(
         self, mock_connection, mock_describe_result, sample_database_data
     ):
-        """Test updating database."""
+        """Test updating database (no updates supported, should execute comment SQL)."""
         manager = DatabaseManager(mock_connection)
 
         # Mock the query call for get() after update
@@ -433,9 +427,9 @@ class TestDatabaseManager:
             "database", test_db_data
         )
 
-        await manager.update("test_db", comment="Updated comment")
+        await manager.update("test_db")
 
-        expected_sql = "ALTER DATABASE \"test_db\" SET COMMENT 'Updated comment';"
+        expected_sql = "-- No updates specified for database \"test_db\";"
         mock_connection.exec.assert_called_once_with(expected_sql)
 
     @pytest.mark.asyncio

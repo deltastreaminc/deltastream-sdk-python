@@ -22,9 +22,9 @@ class TestBaseModel:
     def test_parse_datetime_iso_string(self):
         """Test parsing ISO datetime strings."""
         stream_data = {
-            "name": "test_stream",
-            "created_at": "2024-01-01T12:00:00Z",
-            "updated_at": "2024-01-02T12:00:00.123Z",
+            "Name": "test_stream",
+            "CreatedAt": "2024-01-01T12:00:00Z",
+            "UpdatedAt": "2024-01-02T12:00:00.123Z",
         }
 
         stream = Stream.from_dict(stream_data)
@@ -40,9 +40,9 @@ class TestBaseModel:
     def test_parse_datetime_timestamp(self):
         """Test parsing timestamp numbers."""
         stream_data = {
-            "name": "test_stream",
-            "created_at": 1704110400,  # Unix timestamp for 2024-01-01 12:00:00
-            "updated_at": 1704196800,  # Unix timestamp for 2024-01-02 12:00:00
+            "Name": "test_stream",
+            "CreatedAt": 1704110400,  # Unix timestamp for 2024-01-01 12:00:00
+            "UpdatedAt": 1704196800,  # Unix timestamp for 2024-01-02 12:00:00
         }
 
         stream = Stream.from_dict(stream_data)
@@ -54,7 +54,7 @@ class TestBaseModel:
 
     def test_parse_datetime_none(self):
         """Test handling None datetime values."""
-        stream_data = {"name": "test_stream", "created_at": None, "updated_at": None}
+        stream_data = {"Name": "test_stream", "CreatedAt": None, "UpdatedAt": None}
 
         stream = Stream.from_dict(stream_data)
 
@@ -63,15 +63,32 @@ class TestBaseModel:
 
     def test_to_dict(self):
         """Test converting model to dictionary."""
-        stream = Stream(name="test_stream", owner="test_user", comment="Test comment")
+        stream = Stream(Name="test_stream", Owner="test_user")
 
         data = stream.to_dict()
 
-        assert data["name"] == "test_stream"
-        assert data["owner"] == "test_user"
-        assert data["comment"] == "Test comment"
-        assert "created_at" in data
-        assert "updated_at" in data
+        assert data["Name"] == "test_stream"
+        assert data["Owner"] == "test_user"
+        # Only fields that were provided are in the dict
+        # CreatedAt and UpdatedAt are not in the dict if not provided
+
+    def test_to_dict_with_all_fields(self):
+        """Test converting model with all fields to dictionary."""
+        stream = Stream(
+            data={
+                "Name": "test_stream",
+                "Owner": "test_user",
+                "CreatedAt": "2024-01-01T12:00:00Z",
+                "UpdatedAt": "2024-01-02T12:00:00Z",
+            }
+        )
+
+        data = stream.to_dict()
+
+        assert data["Name"] == "test_stream"
+        assert data["Owner"] == "test_user"
+        assert "CreatedAt" in data
+        assert "UpdatedAt" in data
 
 
 class TestStreamModel:
@@ -83,26 +100,22 @@ class TestStreamModel:
 
         assert stream.name == "test_stream"
         assert stream.owner == "test_user"
-        assert stream.comment == "Test stream"
-        assert stream.store == "test_store"
-        assert stream.topic == "test_topic"
-        assert stream.value_format == "JSON"
-        assert stream.key_format == "STRING"
+        assert stream.stream_type == "STREAM"
+        assert stream.state == "RUNNING"
 
     def test_from_dict_minimal(self):
         """Test creating Stream from minimal data."""
-        minimal_data = {"name": "minimal_stream"}
+        minimal_data = {"Name": "minimal_stream"}
 
         stream = Stream.from_dict(minimal_data)
 
         assert stream.name == "minimal_stream"
         assert stream.owner is None
-        assert stream.comment is None
 
     def test_from_dict_with_unknown_fields(self):
         """Test creating Stream ignores unknown fields."""
         data_with_extras = {
-            "name": "test_stream",
+            "Name": "test_stream",
             "unknown_field": "should_be_ignored",
             "another_unknown": 123,
         }
@@ -123,15 +136,46 @@ class TestStoreModel:
 
         assert store.name == "test_store"
         assert store.owner == "test_user"
-        assert store.parameters.get("store_type") == "KAFKA"
+        assert store.get("Type") == "KAFKA"
+        assert store.get("State") == "ready"
+
+        # Verify base fields are not in parameters
+        assert "Owner" not in store.parameters
+        assert "CreatedAt" not in store.parameters
+        assert "UpdatedAt" not in store.parameters
+
+    def test_from_dict_with_datetime_parsing(self):
+        """Test that datetime fields are properly parsed."""
+        from datetime import datetime
+
+        data = {
+            "Name": "datetime_store",
+            "Owner": "admin",
+            "CreatedAt": "2024-01-01T10:00:00Z",
+            "UpdatedAt": "2024-01-02T15:30:00Z",
+            "Type": "KAFKA",
+        }
+
+        store = Store.from_dict(data)
+
+        assert store.name == "datetime_store"
+        assert store.owner == "admin"
+        assert isinstance(store.created_at, datetime)
+        assert isinstance(store.updated_at, datetime)
+        assert store.created_at.year == 2024
+        assert store.created_at.month == 1
+        assert store.created_at.day == 1
 
     def test_from_dict_minimal(self):
         """Test creating Store from minimal data."""
-        minimal_data = {"name": "minimal_store"}
+        minimal_data = {"Name": "minimal_store"}
 
         store = Store.from_dict(minimal_data)
 
         assert store.name == "minimal_store"
+        assert store.owner is None
+        assert store.created_at is None
+        assert store.updated_at is None
         assert store.parameters.get("store_type") is None
 
 
@@ -144,17 +188,16 @@ class TestDatabaseModel:
 
         assert database.name == "test_database"
         assert database.owner == "test_user"
-        assert database.comment == "Test database"
+        assert database.is_default is False
 
     def test_from_dict_minimal(self):
         """Test creating Database from minimal data."""
-        minimal_data = {"name": "minimal_db"}
+        minimal_data = {"Name": "minimal_db"}
 
         database = Database.from_dict(minimal_data)
 
         assert database.name == "minimal_db"
         assert database.owner is None
-        assert database.comment is None
 
 
 class TestComputePoolModel:
@@ -167,24 +210,25 @@ class TestComputePoolModel:
         assert pool.name == "test_pool"
         assert pool.owner == "test_user"
         assert pool.size == "MEDIUM"
-        assert pool.min_units == 1
-        assert pool.max_units == 5
-        assert pool.auto_suspend is True
+        assert pool.intended_state == "running"
+        assert pool.actual_state == "running"
 
     def test_from_dict_with_string_numbers(self):
-        """Test creating ComputePool with string numbers."""
+        """Test creating ComputePool with different states."""
         data = {
-            "name": "test_pool",
-            "min_units": "2",  # String number
-            "max_units": "10",  # String number
-            "auto_suspend": "true",  # String boolean
+            "Name": "test_pool",
+            "IntendedState": "stopped",
+            "ActualState": "stopped",
+            "Size": "LARGE",
+            "Timeout": 600,
         }
 
         pool = ComputePool.from_dict(data)
 
-        assert pool.min_units == 2  # Should be converted to int
-        assert pool.max_units == 10  # Should be converted to int
-        assert pool.auto_suspend is True  # Should be converted to bool
+        assert pool.intended_state == "stopped"
+        assert pool.actual_state == "stopped"
+        assert pool.size == "LARGE"
+        assert pool.timeout == 600
 
 
 class TestWithClause:

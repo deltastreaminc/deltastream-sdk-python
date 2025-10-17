@@ -78,15 +78,14 @@ def client_with_mock_connection(mock_connection):
 def sample_stream_data():
     """Sample stream data for testing."""
     return {
-        "name": "test_stream",
-        "owner": "test_user",
-        "comment": "Test stream",
-        "created_at": "2024-01-01T00:00:00Z",
-        "updated_at": "2024-01-01T00:00:00Z",
-        "store": "test_store",
-        "topic": "test_topic",
-        "value_format": "JSON",
-        "key_format": "STRING",
+        "Name": "test_stream",
+        "Owner": "test_user",
+        "Type": "STREAM",
+        "State": "RUNNING",
+        "Properties": {},
+        "CreatedAt": "2024-01-01 00:00:00.000",
+        "UpdatedAt": "2024-01-01 00:00:00.000",
+        "Path": ["test_stream"],
     }
 
 
@@ -94,12 +93,15 @@ def sample_stream_data():
 def sample_store_data():
     """Sample store data for testing."""
     return {
-        "name": "test_store",
-        "owner": "test_user",
-        "comment": "Test store",
-        "created_at": "2024-01-01T00:00:00Z",
-        "updated_at": "2024-01-01T00:00:00Z",
-        "store_type": "KAFKA",
+        "Name": "test_store",
+        "Type": "KAFKA",
+        "State": "ready",
+        "Message": "",
+        "IsDefault": False,
+        "Owner": "test_user",
+        "CreatedAt": "2024-01-01 00:00:00.000",
+        "UpdatedAt": "2024-01-01 00:00:00.000",
+        "Path": ["test_store"],
     }
 
 
@@ -107,11 +109,11 @@ def sample_store_data():
 def sample_database_data():
     """Sample database data for testing."""
     return {
-        "name": "test_database",
-        "owner": "test_user",
-        "comment": "Test database",
-        "created_at": "2024-01-01T00:00:00Z",
-        "updated_at": "2024-01-01T00:00:00Z",
+        "Name": "test_database",
+        "IsDefault": False,
+        "Owner": "test_user",
+        "CreatedAt": "2024-01-01 00:00:00.000",
+        "Path": ["test_database"],
     }
 
 
@@ -119,15 +121,16 @@ def sample_database_data():
 def sample_compute_pool_data():
     """Sample compute pool data for testing."""
     return {
-        "name": "test_pool",
-        "owner": "test_user",
-        "comment": "Test compute pool",
-        "created_at": "2024-01-01T00:00:00Z",
-        "updated_at": "2024-01-01T00:00:00Z",
-        "size": "MEDIUM",
-        "min_units": 1,
-        "max_units": 5,
-        "auto_suspend": True,
+        "Name": "test_pool",
+        "IntendedState": "running",
+        "ActualState": "running",
+        "ErrorMessages": "",
+        "Size": "MEDIUM",
+        "Timeout": 300,
+        "Owner": "test_user",
+        "CreatedAt": "2024-01-01 00:00:00.000",
+        "UpdatedAt": "2024-01-01 00:00:00.000",
+        "Path": ["test_pool"],
     }
 
 
@@ -135,11 +138,8 @@ def sample_compute_pool_data():
 def sample_entity_data():
     """Sample entity data for testing."""
     return {
-        "name": "test_entity",
-        "owner": "test_user",
-        "created_at": "2024-01-01T00:00:00Z",
-        "updated_at": "2024-01-01T00:00:00Z",
-        "is_leaf": True,
+        "Name": "test_entity",
+        "IsLeaf": True,
     }
 
 
@@ -178,12 +178,12 @@ def mock_list_result():
         mock_rows = AsyncMock()
 
         mock_column = MagicMock()
-        mock_column.name = "name"
+        mock_column.name = "Name"
         mock_rows.columns = lambda: [mock_column]
 
         async def mock_iter(self):
             for item in items:
-                yield [item]
+                yield [item]  # Yield as list, not dict
 
         mock_rows.__aiter__ = mock_iter
         return mock_rows
