@@ -20,56 +20,19 @@ A modern, async-first Python SDK for [DeltaStream](https://deltastream.io), buil
 │       ├── client.py              # Main DeltaStreamClient class
 │       ├── exceptions.py          # Custom exceptions (DeltaStreamSDKError, ResourceNotFound, etc.)
 │       ├── models/                # Data models (Pydantic-based)
-│       │   ├── base.py
-│       │   ├── streams.py
-│       │   ├── stores.py
-│       │   ├── databases.py
-│       │   ├── schemas.py
-│       │   ├── entities.py
-│       │   ├── functions.py
-│       │   ├── compute_pools.py
-│       │   ├── schema_registries.py
-│       │   ├── changelogs.py
-│       │   ├── descriptor_sources.py
-│       │   └── function_sources.py
 │       └── resources/             # Resource managers (CRUD operations)
-│           ├── base.py
-│           ├── streams.py
-│           ├── stores.py
-│           ├── databases.py
-│           ├── schemas.py
-│           ├── entities.py
-│           ├── functions.py
-│           ├── compute_pools.py
-│           ├── schema_registries.py
-│           ├── changelogs.py
-│           ├── descriptor_sources.py
-│           └── function_sources.py
 ├── tests/
 │   └── sdk/                       # SDK tests
 │       ├── conftest.py            # Test fixtures and configuration
-│       ├── test_client.py
-│       ├── test_models.py
-│       ├── test_resources.py
-│       ├── test_exceptions.py
-│       └── test_store_params.py
 ├── examples/                      # Usage examples
-│   ├── list_entity/
-│   ├── insert_entity/
-│   ├── csa_data_generator/
-│   └── defi_event_generator/
 ├── docs/                          # Documentation and RFCs
-│   ├── sdk-architecture.md
-│   ├── sdk-resource-roadmap.md
-│   ├── model-field-mapping.md
-│   └── rfcs/
 └── pyproject.toml                 # Project configuration and dependencies
 ```
 
 ## Code Style and Structure
 
 ### General Principles
-- Write concise, technical Python, SQL, or Jinja code with accurate examples
+- Write concise, technical Python or SQL code with accurate examples
 - Use functional and declarative programming patterns; avoid classes where possible (except for resource managers and models)
 - Prefer iteration and modularization over code duplication
 - Use descriptive variable names with auxiliary verbs (e.g., `is_connected`, `has_error`, `fetch_results`)
