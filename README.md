@@ -138,7 +138,7 @@ async def stream_example(client):
 
     analytics_stream = await client.streams.create_from_select(
         name="user_analytics",
-        query="SELECT user_id, COUNT(*) AS event_count FROM user_events GROUP BY user_id",
+        sql_definition="SELECT user_id, COUNT(*) AS event_count FROM user_events GROUP BY user_id",
     )
 
     await client.streams.start("user_events")
@@ -182,9 +182,6 @@ async def store_example(client):
         },
     )
 
-    # List topics from a store
-    topics = await client.stores.get_topics("my_kafka")
-    
     # List all stores
     all_stores = await client.stores.list()
 ```
@@ -193,8 +190,8 @@ async def store_example(client):
 
 ```python
 async def context_example(client):
-    await client.databases.create(name="analytics_db", comment="Analytics database")
-    await client.schemas.create(name="customer_data", comment="Customer data schema")
+    await client.databases.create(name="analytics_db")
+    await client.schemas.create(name="customer_data")
 
     await client.use_database("analytics_db")
     await client.use_schema("customer_data")
