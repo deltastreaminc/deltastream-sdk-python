@@ -233,19 +233,6 @@ The generator follows these patterns:
 4. **Multi-User Simulation**: Tracks 8 different users with concurrent activities
 5. **Async Operations**: Leverages Python asyncio for non-blocking event generation
 
-## Comparison with Java Version
-
-This Python implementation provides the same functionality as the original Java version:
-
-| Feature | Java | Python |
-|---------|------|--------|
-| Kafka Client | Direct KafkaProducer | DeltaStream SDK (entities.insert_values) |
-| Concurrency | Thread.sleep in loop | asyncio.sleep |
-| Configuration | Hard-coded constants | Environment variables |
-| JSON Handling | Jackson ObjectMapper | Python dict |
-| Entity Management | Manual topic creation | SDK EntityCreateParams |
-| Timestamp Format | DateTimeFormatter | datetime.strftime |
-
 ## Simulated Users
 
 The generator simulates activity for 8 users:

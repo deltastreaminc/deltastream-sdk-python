@@ -24,23 +24,18 @@ class DatabaseManager(BaseResourceManager[Database]):
         if isinstance(params.get("params"), DatabaseCreateParams):
             create_params = params["params"]
         else:
-            create_params = DatabaseCreateParams(**params)
+            # Filter out unsupported params before creating DatabaseCreateParams
+            valid_params = {k: v for k, v in params.items() if k in ["name"]}
+            create_params = DatabaseCreateParams(**valid_params)
 
         name = self._escape_identifier(create_params.name)
         sql = f"CREATE DATABASE {name}"
-
-        if create_params.comment:
-            sql += f" COMMENT {self._escape_string(create_params.comment)}"
 
         return sql
 
     def _get_update_sql(self, name: str, **params) -> str:
         """Generate SQL for updating a database."""
         escaped_name = self._escape_identifier(name)
-        comment = params.get("comment")
-
-        if comment:
-            return f"ALTER DATABASE {escaped_name} SET COMMENT {self._escape_string(comment)}"
 
         return f"-- No updates specified for database {escaped_name}"
 

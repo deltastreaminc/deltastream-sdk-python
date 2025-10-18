@@ -180,22 +180,16 @@ class TestStreamManager:
     async def test_update_stream(
         self, mock_connection, mock_describe_result, sample_stream_data
     ):
-        """Test updating stream."""
+        """Test that updating stream raises SQLError with InvalidConfiguration."""
         manager = StreamManager(mock_connection)
 
-        # Mock the query call for get() after update
-        mock_connection.query.return_value = mock_describe_result(
-            "stream", sample_stream_data
-        )
-
         from deltastream_sdk.models import StreamUpdateParams
+        from deltastream_sdk.exceptions import SQLError
 
-        params = StreamUpdateParams(comment="Updated comment")
+        params = StreamUpdateParams()
 
-        await manager.update("test_stream", params)
-
-        expected_sql = "ALTER STREAM \"test_stream\" SET COMMENT 'Updated comment';"
-        mock_connection.exec.assert_called_once_with(expected_sql)
+        with pytest.raises(SQLError, match="Stream updates are limited"):
+            await manager.update("test_stream", params)
 
     @pytest.mark.asyncio
     async def test_delete_stream(self, mock_connection):
@@ -267,19 +261,21 @@ class TestStoreManager:
 
         await manager.create_kafka_store(
             name="kafka_store",
-            bootstrap_servers="localhost:9092",
-            auth_type="PLAIN",
-            username="user",
-            password="pass",
+            parameters={
+                "uris": "localhost:9092",
+                "kafka.sasl.hash_function": "PLAIN",
+                "kafka.sasl.username": "user",
+                "kafka.sasl.password": "pass",
+            },
         )
 
         call_args = mock_connection.exec.call_args[0][0]
         assert 'CREATE STORE "kafka_store"' in call_args
-        assert "'type' = 'KAFKA'" in call_args
-        assert "'bootstrap.servers' = 'localhost:9092'" in call_args
-        assert "'auth.type' = 'PLAIN'" in call_args
-        assert "'auth.username' = 'user'" in call_args
-        assert "'auth.password' = 'pass'" in call_args
+        assert "'type' = KAFKA" in call_args
+        assert "'uris' = 'localhost:9092'" in call_args
+        assert "'kafka.sasl.hash_function' = PLAIN" in call_args
+        assert "'kafka.sasl.username' = 'user'" in call_args
+        assert "'kafka.sasl.password' = 'pass'" in call_args
 
     @pytest.mark.asyncio
     async def test_create_kinesis_store(
@@ -297,17 +293,19 @@ class TestStoreManager:
 
         await manager.create_kinesis_store(
             name="kinesis_store",
-            region="us-east-1",
-            access_key_id="ACCESS_KEY",
-            secret_access_key="SECRET_KEY",
+            parameters={
+                "uris": "https://kinesis.us-east-1.amazonaws.com",
+                "kinesis.access_key_id": "ACCESS_KEY",
+                "kinesis.secret_access_key": "SECRET_KEY",
+            },
         )
 
         call_args = mock_connection.exec.call_args[0][0]
         assert 'CREATE STORE "kinesis_store"' in call_args
-        assert "'type' = 'KINESIS'" in call_args
-        assert "'region' = 'us-east-1'" in call_args
-        assert "'aws.access.key.id' = 'ACCESS_KEY'" in call_args
-        assert "'aws.secret.access.key' = 'SECRET_KEY'" in call_args
+        assert "'type' = KINESIS" in call_args
+        assert "'uris' = 'https://kinesis.us-east-1.amazonaws.com'" in call_args
+        assert "'kinesis.access_key_id' = 'ACCESS_KEY'" in call_args
+        assert "'kinesis.secret_access_key' = 'SECRET_KEY'" in call_args
 
     @pytest.mark.asyncio
     async def test_create_s3_store(
@@ -325,17 +323,19 @@ class TestStoreManager:
 
         await manager.create_s3_store(
             name="s3_store",
-            region="us-west-2",
-            access_key_id="ACCESS_KEY",
-            secret_access_key="SECRET_KEY",
+            parameters={
+                "uris": "https://mybucket.s3.us-west-2.amazonaws.com/",
+                "aws.access_key_id": "ACCESS_KEY",
+                "aws.secret_access_key": "SECRET_KEY",
+            },
         )
 
         call_args = mock_connection.exec.call_args[0][0]
         assert 'CREATE STORE "s3_store"' in call_args
-        assert "'type' = 'S3'" in call_args
-        assert "'region' = 'us-west-2'" in call_args
-        assert "'aws.access.key.id' = 'ACCESS_KEY'" in call_args
-        assert "'aws.secret.access.key' = 'SECRET_KEY'" in call_args
+        assert "'type' = S3" in call_args
+        assert "'uris' = 'https://mybucket.s3.us-west-2.amazonaws.com/'" in call_args
+        assert "'aws.access_key_id' = 'ACCESS_KEY'" in call_args
+        assert "'aws.secret_access_key' = 'SECRET_KEY'" in call_args
 
     @pytest.mark.asyncio
     async def test_test_connection(self, mock_connection, mock_query_rows):
@@ -351,18 +351,6 @@ class TestStoreManager:
         mock_connection.query.assert_called_once_with(expected_sql)
         assert result == {"name": "test_stream"}
 
-    @pytest.mark.asyncio
-    async def test_get_topics(self, mock_connection, mock_list_result):
-        """Test getting store topics."""
-        manager = StoreManager(mock_connection)
-        mock_connection.query.return_value = mock_list_result(["topic1", "topic2"])
-
-        topics = await manager.get_topics("kafka_store")
-
-        expected_sql = 'LIST TOPICS FROM STORE "kafka_store";'
-        mock_connection.query.assert_called_once_with(expected_sql)
-        assert topics == ["topic1", "topic2"]
-
 
 class TestDatabaseManager:
     """Test DatabaseManager."""
@@ -376,16 +364,16 @@ class TestDatabaseManager:
 
         # Mock the query call for get() after creation
         test_db_data = sample_database_data.copy()
-        test_db_data["name"] = "test_db"
+        test_db_data["Name"] = "test_db"  # Use PascalCase for API field names
         mock_connection.query.return_value = mock_describe_result(
             "database", test_db_data
         )
 
-        await manager.create(name="test_db", comment="Test database")
+        # Note: comment parameter is ignored as it's not supported by DeltaStream API
+        await manager.create(name="test_db")
 
         call_args = mock_connection.exec.call_args[0][0]
         assert 'CREATE DATABASE "test_db"' in call_args
-        assert "COMMENT 'Test database'" in call_args
 
     @pytest.mark.asyncio
     async def test_create_database_minimal(
@@ -429,7 +417,7 @@ class TestDatabaseManager:
     async def test_update_database(
         self, mock_connection, mock_describe_result, sample_database_data
     ):
-        """Test updating database."""
+        """Test updating database (no updates supported, should execute comment SQL)."""
         manager = DatabaseManager(mock_connection)
 
         # Mock the query call for get() after update
@@ -439,9 +427,9 @@ class TestDatabaseManager:
             "database", test_db_data
         )
 
-        await manager.update("test_db", comment="Updated comment")
+        await manager.update("test_db")
 
-        expected_sql = "ALTER DATABASE \"test_db\" SET COMMENT 'Updated comment';"
+        expected_sql = '-- No updates specified for database "test_db";'
         mock_connection.exec.assert_called_once_with(expected_sql)
 
     @pytest.mark.asyncio
@@ -635,3 +623,317 @@ class TestEntityManager:
         assert '"viewtime": 1753311018649' in call_args
         assert '"userid": "User_3"' in call_args
         assert '"pageid": "Page_1"' in call_args
+
+    @pytest.mark.asyncio
+    async def test_create_entity_with_defaults(
+        self, mock_connection, mock_describe_result, sample_entity_data
+    ):
+        """Test creating a Kafka entity with default parameters."""
+        from deltastream_sdk.resources import EntityManager
+
+        manager = EntityManager(mock_connection)
+
+        # Mock the query call for get() after creation
+        entity_data = sample_entity_data.copy()
+        entity_data["name"] = "pv"
+        mock_connection.query.return_value = mock_describe_result("entity", entity_data)
+
+        await manager.create(name="pv")
+
+        call_args = mock_connection.exec.call_args[0][0]
+        assert 'CREATE ENTITY "pv"' in call_args
+        # No IN STORE or WITH clauses for defaults
+        assert "IN STORE" not in call_args
+        assert "WITH" not in call_args
+
+    @pytest.mark.asyncio
+    async def test_create_entity_with_store(
+        self, mock_connection, mock_describe_result, sample_entity_data
+    ):
+        """Test creating entity in a specific store."""
+        from deltastream_sdk.resources import EntityManager
+
+        manager = EntityManager(mock_connection)
+
+        # Mock the query call for get() after creation
+        entity_data = sample_entity_data.copy()
+        entity_data["name"] = "pv"
+        mock_connection.query.return_value = mock_describe_result("entity", entity_data)
+
+        await manager.create(name="pv", store="demostore")
+
+        call_args = mock_connection.exec.call_args[0][0]
+        assert 'CREATE ENTITY "pv"' in call_args
+        assert 'IN STORE "demostore"' in call_args
+
+    @pytest.mark.asyncio
+    async def test_create_kafka_entity_with_passthrough_config(
+        self, mock_connection, mock_describe_result, sample_entity_data
+    ):
+        """Test creating Kafka entity with retention and other topic configurations."""
+        from deltastream_sdk.resources import EntityManager
+
+        manager = EntityManager(mock_connection)
+
+        # Mock the query call for get() after creation
+        entity_data = sample_entity_data.copy()
+        entity_data["name"] = "customers"
+        mock_connection.query.return_value = mock_describe_result("entity", entity_data)
+
+        await manager.create(
+            name="customers",
+            store="kafka_store",
+            params={
+                "topic.partitions": "1",
+                "topic.replicas": "2",
+                "kafka.topic.retention.ms": "172800000",
+            },
+        )
+
+        call_args = mock_connection.exec.call_args[0][0]
+        assert 'CREATE ENTITY "customers"' in call_args
+        assert 'IN STORE "kafka_store"' in call_args
+        assert "WITH (" in call_args
+        assert "'topic.partitions' = '1'" in call_args
+        assert "'topic.replicas' = '2'" in call_args
+        assert "'kafka.topic.retention.ms' = '172800000'" in call_args
+
+    @pytest.mark.asyncio
+    async def test_create_kafka_entity_with_cleanup_policy(
+        self, mock_connection, mock_describe_result, sample_entity_data
+    ):
+        """Test creating Kafka entity with partitions, replicas, and cleanup policy."""
+        from deltastream_sdk.resources import EntityManager
+
+        manager = EntityManager(mock_connection)
+
+        # Mock the query call for get() after creation
+        entity_data = sample_entity_data.copy()
+        entity_data["name"] = "pv_compact"
+        mock_connection.query.return_value = mock_describe_result("entity", entity_data)
+
+        await manager.create(
+            name="pv_compact",
+            params={
+                "topic.partitions": "2",
+                "topic.replicas": "1",
+                "kafka.topic.cleanup.policy": "compact",
+            },
+        )
+
+        call_args = mock_connection.exec.call_args[0][0]
+        assert 'CREATE ENTITY "pv_compact"' in call_args
+        assert "WITH (" in call_args
+        assert "'topic.partitions' = '2'" in call_args
+        assert "'topic.replicas' = '1'" in call_args
+        assert "'kafka.topic.cleanup.policy' = 'compact'" in call_args
+
+    @pytest.mark.asyncio
+    async def test_create_entity_with_protobuf_descriptors(
+        self, mock_connection, mock_describe_result, sample_entity_data
+    ):
+        """Test creating entity with key and value ProtoBuf descriptors."""
+        from deltastream_sdk.resources import EntityManager
+
+        manager = EntityManager(mock_connection)
+
+        # Mock the query call for get() after creation
+        entity_data = sample_entity_data.copy()
+        entity_data["name"] = "pv_pb"
+        mock_connection.query.return_value = mock_describe_result("entity", entity_data)
+
+        await manager.create(
+            name="pv_pb",
+            params={
+                "key.descriptor": 'pb_key."PageviewsKey"',
+                "value.descriptor": 'pb_value."Pageviews"',
+            },
+        )
+
+        call_args = mock_connection.exec.call_args[0][0]
+        assert 'CREATE ENTITY "pv_pb"' in call_args
+        assert "WITH (" in call_args
+        assert "'key.descriptor' = 'pb_key.\"PageviewsKey\"'" in call_args
+        assert "'value.descriptor' = 'pb_value.\"Pageviews\"'" in call_args
+
+    @pytest.mark.asyncio
+    async def test_create_kinesis_entity_with_shards(
+        self, mock_connection, mock_describe_result, sample_entity_data
+    ):
+        """Test creating Kinesis entity with shards parameter."""
+        from deltastream_sdk.resources import EntityManager
+
+        manager = EntityManager(mock_connection)
+
+        # Mock the query call for get() after creation
+        entity_data = sample_entity_data.copy()
+        entity_data["name"] = "pv_kinesis"
+        mock_connection.query.return_value = mock_describe_result("entity", entity_data)
+
+        await manager.create(
+            name="pv_kinesis", store="kinesis_store", params={"kinesis.shards": "3"}
+        )
+
+        call_args = mock_connection.exec.call_args[0][0]
+        assert 'CREATE ENTITY "pv_kinesis"' in call_args
+        assert 'IN STORE "kinesis_store"' in call_args
+        assert "WITH (" in call_args
+        assert "'kinesis.shards' = '3'" in call_args
+
+    @pytest.mark.asyncio
+    async def test_create_snowflake_database(
+        self, mock_connection, mock_describe_result, sample_entity_data
+    ):
+        """Test creating a Snowflake database (case-sensitive name)."""
+        from deltastream_sdk.resources import EntityManager
+
+        manager = EntityManager(mock_connection)
+
+        # Mock the query call for get() after creation
+        entity_data = sample_entity_data.copy()
+        entity_data["name"] = "DELTA_STREAMING"
+        mock_connection.query.return_value = mock_describe_result("entity", entity_data)
+
+        await manager.create(name="DELTA_STREAMING")
+
+        call_args = mock_connection.exec.call_args[0][0]
+        # Name should be properly quoted to preserve case
+        assert 'CREATE ENTITY "DELTA_STREAMING"' in call_args
+
+    @pytest.mark.asyncio
+    async def test_create_snowflake_schema_in_database(
+        self, mock_connection, mock_describe_result, sample_entity_data
+    ):
+        """Test creating a Snowflake schema within a database."""
+        from deltastream_sdk.resources import EntityManager
+
+        manager = EntityManager(mock_connection)
+
+        # Mock the query call for get() after creation
+        entity_data = sample_entity_data.copy()
+        entity_data["name"] = "DELTA_STREAMING.MY_STREAMING_SCHEMA"
+        mock_connection.query.return_value = mock_describe_result("entity", entity_data)
+
+        await manager.create(name="DELTA_STREAMING.MY_STREAMING_SCHEMA")
+
+        call_args = mock_connection.exec.call_args[0][0]
+        # Hierarchical name should be properly quoted
+        assert 'CREATE ENTITY "DELTA_STREAMING.MY_STREAMING_SCHEMA"' in call_args
+
+    @pytest.mark.asyncio
+    async def test_create_databricks_catalog(
+        self, mock_connection, mock_describe_result, sample_entity_data
+    ):
+        """Test creating a Databricks catalog."""
+        from deltastream_sdk.resources import EntityManager
+
+        manager = EntityManager(mock_connection)
+
+        # Mock the query call for get() after creation
+        entity_data = sample_entity_data.copy()
+        entity_data["name"] = "cat1"
+        mock_connection.query.return_value = mock_describe_result("entity", entity_data)
+
+        await manager.create(name="cat1")
+
+        call_args = mock_connection.exec.call_args[0][0]
+        assert 'CREATE ENTITY "cat1"' in call_args
+
+    @pytest.mark.asyncio
+    async def test_create_databricks_schema_in_catalog(
+        self, mock_connection, mock_describe_result, sample_entity_data
+    ):
+        """Test creating a Databricks schema within a catalog."""
+        from deltastream_sdk.resources import EntityManager
+
+        manager = EntityManager(mock_connection)
+
+        # Mock the query call for get() after creation
+        entity_data = sample_entity_data.copy()
+        entity_data["name"] = "cat1.schema1"
+        mock_connection.query.return_value = mock_describe_result("entity", entity_data)
+
+        await manager.create(name="cat1.schema1")
+
+        call_args = mock_connection.exec.call_args[0][0]
+        # Hierarchical name should be properly quoted
+        assert 'CREATE ENTITY "cat1.schema1"' in call_args
+
+    @pytest.mark.asyncio
+    async def test_create_entity_with_all_parameters(
+        self, mock_connection, mock_describe_result, sample_entity_data
+    ):
+        """Test creating entity with all possible parameters."""
+        from deltastream_sdk.resources import EntityManager
+
+        manager = EntityManager(mock_connection)
+
+        # Mock the query call for get() after creation
+        entity_data = sample_entity_data.copy()
+        entity_data["name"] = "complex_entity"
+        mock_connection.query.return_value = mock_describe_result("entity", entity_data)
+
+        await manager.create(
+            name="complex_entity",
+            store="kafka_store",
+            params={
+                "topic.partitions": "3",
+                "topic.replicas": "2",
+                "kafka.topic.retention.ms": "604800000",
+                "kafka.topic.cleanup.policy": "delete",
+                "key.descriptor": "pb_key.MyKey",
+                "value.descriptor": "pb_value.MyValue",
+            },
+        )
+
+        call_args = mock_connection.exec.call_args[0][0]
+        assert 'CREATE ENTITY "complex_entity"' in call_args
+        assert 'IN STORE "kafka_store"' in call_args
+        assert "WITH (" in call_args
+        assert "'topic.partitions' = '3'" in call_args
+        assert "'topic.replicas' = '2'" in call_args
+        assert "'kafka.topic.retention.ms' = '604800000'" in call_args
+        assert "'kafka.topic.cleanup.policy' = 'delete'" in call_args
+        assert "'key.descriptor' = 'pb_key.MyKey'" in call_args
+        assert "'value.descriptor' = 'pb_value.MyValue'" in call_args
+
+    @pytest.mark.asyncio
+    async def test_create_entity_with_case_sensitive_store_name(
+        self, mock_connection, mock_describe_result, sample_entity_data
+    ):
+        """Test creating entity with case-sensitive store name."""
+        from deltastream_sdk.resources import EntityManager
+
+        manager = EntityManager(mock_connection)
+
+        # Mock the query call for get() after creation
+        entity_data = sample_entity_data.copy()
+        entity_data["name"] = "my_entity"
+        mock_connection.query.return_value = mock_describe_result("entity", entity_data)
+
+        await manager.create(name="my_entity", store="MySpecialStore")
+
+        call_args = mock_connection.exec.call_args[0][0]
+        assert 'CREATE ENTITY "my_entity"' in call_args
+        # Store name should be properly quoted to preserve case
+        assert 'IN STORE "MySpecialStore"' in call_args
+
+    @pytest.mark.asyncio
+    async def test_create_entity_escapes_special_characters(
+        self, mock_connection, mock_describe_result, sample_entity_data
+    ):
+        """Test that entity names with special characters are properly escaped."""
+        from deltastream_sdk.resources import EntityManager
+
+        manager = EntityManager(mock_connection)
+
+        # Mock the query call for get() after creation
+        entity_data = sample_entity_data.copy()
+        entity_data["name"] = 'entity"with"quotes'
+        mock_connection.query.return_value = mock_describe_result("entity", entity_data)
+
+        await manager.create(name='entity"with"quotes')
+
+        call_args = mock_connection.exec.call_args[0][0]
+        # Quotes in the name should be escaped (doubled)
+        assert 'CREATE ENTITY "entity""with""quotes"' in call_args

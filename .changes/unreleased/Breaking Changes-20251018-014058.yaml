@@ -1,0 +1,6 @@
+kind: Features
+body: Rework the different constructor and SDK API to make it more future proof
+time: 2025-10-18T01:40:58.600389+02:00
+custom:
+    Author: Kayrnt
+    Issue: ""

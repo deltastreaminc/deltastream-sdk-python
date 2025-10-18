@@ -297,7 +297,7 @@ class DeltaStreamClient:
             databases = await self.databases.list()
             for db in databases:
                 # Look for the default database
-                if hasattr(db, "is_default") and db.is_default:
+                if db.is_default:
                     self._current_database = db.name
                     return db.name
 
@@ -322,7 +322,7 @@ class DeltaStreamClient:
             stores = await self.stores.list()
             for store in stores:
                 # Look for the default store
-                if hasattr(store, "is_default") and store.is_default:
+                if store.is_default:
                     self._current_store = store.name
                     return store.name
 
@@ -347,7 +347,7 @@ class DeltaStreamClient:
             schemas = await self.schemas.list()
             for schema in schemas:
                 # Look for the default schema
-                if hasattr(schema, "is_default") and schema.is_default:
+                if schema.is_default:
                     self._current_schema = schema.name
                     return schema.name
 

@@ -81,7 +81,8 @@ if __name__ == "__main__":
 ### Environment Variables
 
 ```bash
-export DELTASTREAM_DSN="deltastream://user:pass@host:port/"             # Option A
+# Option A (DSN-based)
+export DELTASTREAM_DSN="https://:your_token@api.deltastream.io/v2"             
 # OR explicit config (Option B)
 export DELTASTREAM_SERVER_URL="https://api.deltastream.io/v2"
 export DELTASTREAM_TOKEN="your_token_here"
@@ -115,7 +116,7 @@ client = DeltaStreamClient(
 )
 
 # 3. DSN-based
-client = DeltaStreamClient(dsn="deltastream://user:pass@host:port/")
+client = DeltaStreamClient(dsn="https://:your_token@api.deltastream.io/v2")
 ```
 
 ### Streams
@@ -137,7 +138,7 @@ async def stream_example(client):
 
     analytics_stream = await client.streams.create_from_select(
         name="user_analytics",
-        query="SELECT user_id, COUNT(*) AS event_count FROM user_events GROUP BY user_id",
+        sql_definition="SELECT user_id, COUNT(*) AS event_count FROM user_events GROUP BY user_id",
     )
 
     await client.streams.start("user_events")
@@ -149,16 +150,39 @@ async def stream_example(client):
 
 ```python
 async def store_example(client):
+    # Create a Kafka store with PLAIN authentication
     kafka_store = await client.stores.create_kafka_store(
         name="my_kafka",
-        bootstrap_servers="localhost:9092",
-        auth_type="PLAIN",
-        username="user",
-        password="pass",
-        schema_registry_url="http://localhost:8081",
+        parameters={
+            "uris": "localhost:9092",
+            "kafka.sasl.hash_function": "PLAIN",
+            "kafka.sasl.username": "user",
+            "kafka.sasl.password": "pass",
+            "schema_registry_name": "my_schema_registry",
+        },
     )
 
-    topics = await client.stores.get_topics("my_kafka")
+    # Create an S3 store with IAM role
+    s3_store = await client.stores.create_s3_store(
+        name="my_s3",
+        parameters={
+            "uris": "https://mybucket.s3.amazonaws.com/",
+            "aws.iam_role_arn": "arn:aws:iam::123456789012:role/DeltaStreamRole",
+            "aws.iam_external_id": "external-id-123",
+        },
+    )
+
+    # Create a Kinesis store
+    kinesis_store = await client.stores.create_kinesis_store(
+        name="my_kinesis",
+        parameters={
+            "uris": "https://kinesis.us-east-1.amazonaws.com",
+            "kinesis.access_key_id": "AKIAIOSFODNN7EXAMPLE",
+            "kinesis.secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+        },
+    )
+
+    # List all stores
     all_stores = await client.stores.list()
 ```
 
@@ -166,8 +190,8 @@ async def store_example(client):
 
 ```python
 async def context_example(client):
-    await client.databases.create(name="analytics_db", comment="Analytics database")
-    await client.schemas.create(name="customer_data", comment="Customer data schema")
+    await client.databases.create(name="analytics_db")
+    await client.schemas.create(name="customer_data")
 
     await client.use_database("analytics_db")
     await client.use_schema("customer_data")
@@ -183,12 +207,35 @@ async def context_example(client):
 
 ```python
 async def entity_example(client):
+    # Create entity with default parameters
+    await client.entities.create(
+        name="simple_entity",
+        store="my_kafka",
+    )
+    
+    # Create entity with custom Kafka configurations
     await client.entities.create(
         name="user_profiles",
         store="my_kafka",
-        params={"topic.partitions": 3},
+        parameters={
+            "kafka.partitions": 3,
+            "kafka.replicas": 2,
+            "kafka.topic.retention.ms": "604800000",  # 7 days
+        },
+    )
+    
+    # Create entity with compact cleanup policy
+    await client.entities.create(
+        name="user_compact",
+        store="my_kafka",
+        parameters={
+            "kafka.partitions": 2,
+            "kafka.replicas": 1,
+            "kafka.topic.cleanup.policy": "compact",
+        },
     )
 
+    # Insert data into entity
     await client.entities.insert_values(
         name="user_profiles",
         values=[
@@ -198,6 +245,7 @@ async def entity_example(client):
         store="my_kafka",
     )
 
+    # List entities in a store
     entities = await client.entities.list_entities(store="my_kafka")
 ```
 

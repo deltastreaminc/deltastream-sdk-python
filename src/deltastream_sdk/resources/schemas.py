@@ -29,18 +29,11 @@ class SchemaManager(BaseResourceManager[Schema]):
         name = self._escape_identifier(create_params.name)
         sql = f"CREATE SCHEMA {name}"
 
-        if create_params.comment:
-            sql += f" COMMENT {self._escape_string(create_params.comment)}"
-
         return sql
 
     def _get_update_sql(self, name: str, **params) -> str:
         """Generate SQL for updating a schema."""
         escaped_name = self._escape_identifier(name)
-        comment = params.get("comment")
-
-        if comment:
-            return f"ALTER SCHEMA {escaped_name} SET COMMENT {self._escape_string(comment)}"
 
         return f"-- No updates specified for schema {escaped_name}"
 
