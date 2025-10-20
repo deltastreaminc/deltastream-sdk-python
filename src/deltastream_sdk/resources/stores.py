@@ -2,7 +2,7 @@
 Store resource manager for DeltaStream SDK.
 """
 
-from typing import Optional, List, Dict, Any
+from typing import Dict, Any
 from .base import BaseResourceManager
 from ..models.stores import Store, StoreCreateParams, StoreUpdateParams
 
@@ -41,13 +41,9 @@ class StoreManager(BaseResourceManager[Store]):
             create_params = StoreCreateParams(**params)
 
         name = self._escape_identifier(create_params.name)
-        store_type = create_params.store_type.upper()
 
         # Build CREATE STORE statement
-        sql = f"CREATE STORE {name} TYPE {store_type}"
-
-        if create_params.comment:
-            sql += f" COMMENT {self._escape_string(create_params.comment)}"
+        sql = f"CREATE STORE {name}"
 
         # Add WITH clause for connection parameters
         with_clause = create_params.to_with_clause()
@@ -80,67 +76,84 @@ class StoreManager(BaseResourceManager[Store]):
         escaped_name = self._escape_identifier(name)
         return f"DROP STORE {escaped_name}"
 
+    async def _create_store_with_type(
+        self, name: str, store_type: str, **kwargs: Any
+    ) -> Store:
+        """
+        Internal helper to create a store of any type.
+
+        Args:
+            name: Name of the store
+            store_type: Type of the store (KAFKA, KINESIS, S3, etc.)
+            **kwargs: Additional parameters for the store
+
+        Returns:
+            Created Store object
+        """
+        params = StoreCreateParams(
+            name=name,
+            type=store_type,
+            parameters=kwargs if kwargs else None,
+        )
+        return await self.create(params=params)
+
     # Store-specific operations
     async def create_kafka_store(
-        self,
-        name: str,
-        bootstrap_servers: str,
-        auth_type: Optional[str] = None,
-        username: Optional[str] = None,
-        password: Optional[str] = None,
-        schema_registry_url: Optional[str] = None,
-        **kwargs,
+        self, name: str, parameters: Dict[str, Any] | None = None
     ) -> Store:
-        """Create a Kafka data store."""
-        params = StoreCreateParams(
-            name=name,
-            store_type="KAFKA",
-            bootstrap_servers=bootstrap_servers,
-            auth_type=auth_type,
-            username=username,
-            password=password,
-            schema_registry_url=schema_registry_url,
-            **kwargs,
-        )
-        return await self.create(params=params)
+        """
+        Create a Kafka data store.
+
+        Args:
+            name: Name of the store
+            parameters: Dictionary of store parameters using DeltaStream parameter names.
+                   Example: {"uris": "kafka:9092", "kafka.sasl.hash_function": "PLAIN",
+                   "kafka.sasl.username": "user", "kafka.sasl.password": "pass",
+                   "schema_registry_name": "my_registry", "tls.ca_cert_file": "@/path/to/ca.pem"}
+
+        Returns:
+            Created Store object
+        """
+        return await self._create_store_with_type(name, "KAFKA", **(parameters or {}))
 
     async def create_kinesis_store(
-        self,
-        name: str,
-        region: str,
-        access_key_id: Optional[str] = None,
-        secret_access_key: Optional[str] = None,
-        **kwargs,
+        self, name: str, parameters: Dict[str, Any] | None = None
     ) -> Store:
-        """Create a Kinesis data store."""
-        params = StoreCreateParams(
-            name=name,
-            store_type="KINESIS",
-            region=region,
-            access_key_id=access_key_id,
-            secret_access_key=secret_access_key,
-            **kwargs,
-        )
-        return await self.create(params=params)
+        """
+        Create a Kinesis data store.
+
+        Args:
+            name: Name of the store
+            parameters: Dictionary of store parameters using DeltaStream parameter names.
+                   Example: {"uris": "https://kinesis.amazonaws.com",
+                   "kinesis.iam_role_arn": "arn:aws:iam::123456789012:role/my-role",
+                   "kinesis.access_key_id": "ACCESS_KEY",
+                   "kinesis.secret_access_key": "SECRET_KEY"}
+
+        Returns:
+            Created Store object
+        """
+        return await self._create_store_with_type(name, "KINESIS", **(parameters or {}))
 
     async def create_s3_store(
-        self,
-        name: str,
-        region: str,
-        access_key_id: Optional[str] = None,
-        secret_access_key: Optional[str] = None,
-        **kwargs,
+        self, name: str, parameters: Dict[str, Any] | None = None
     ) -> Store:
-        """Create an S3 data store."""
-        params = StoreCreateParams(
-            name=name,
-            store_type="S3",
-            region=region,
-            access_key_id=access_key_id,
-            secret_access_key=secret_access_key,
-            **kwargs,
-        )
-        return await self.create(params=params)
+        """
+        Create an S3 data store.
+
+        Args:
+            name: Name of the store
+            parameters: Dictionary of store parameters using DeltaStream parameter names.
+                   Example: {"uris": "https://mybucket.s3.amazonaws.com/",
+                   "aws.access_key_id": "ACCESS_KEY",
+                   "aws.secret_access_key": "SECRET_KEY",
+                   "aws.iam_role_arn": "arn:aws:iam::123456789012:role/MyRole",
+                   "aws.iam_external_id": "external-id"}
+
+        Returns:
+            Created Store object
+        """
+        return await self._create_store_with_type(name, "S3", **(parameters or {}))
 
     async def test_connection(self, name: str) -> Dict[str, Any]:
         """Test the connection to a data store."""
@@ -148,10 +161,3 @@ class StoreManager(BaseResourceManager[Store]):
         sql = f"TEST STORE {escaped_name}"
         results = await self._query_sql(sql)
         return results[0] if results else {"status": "unknown"}
-
-    async def get_topics(self, name: str) -> List[str]:
-        """Get list of topics/streams available in the store."""
-        escaped_name = self._escape_identifier(name)
-        sql = f"LIST TOPICS FROM STORE {escaped_name}"
-        results = await self._query_sql(sql)
-        return [result.get("topic_name", result.get("name", "")) for result in results]

@@ -18,7 +18,6 @@ from typing import Any, Dict
 
 from deltastream_sdk import DeltaStreamClient
 from deltastream_sdk.exceptions import DeltaStreamSDKError
-from deltastream_sdk.models.entities import EntityCreateParams
 from dotenv import find_dotenv, load_dotenv
 
 
@@ -74,16 +73,15 @@ class DeFiEventGenerator:
 
                 if not entity_exists:
                     print(f"Creating entity '{entity_name}'...")
-                    create_params = EntityCreateParams(
+                    await self.client.entities.create(
                         name=entity_name,
                         store=self.store_name,
-                        params={
-                            "kafka.topic.partitions": 3,
-                            "kafka.topic.replicas": 1,
+                        parameters={
+                            "kafka.partitions": 3,
+                            "kafka.replicas": 1,
                             "kafka.topic.retention.ms": "604800000",  # 7 days
                         },
                     )
-                    await self.client.entities.create(params=create_params)
                     print(f"✅ Created entity '{entity_name}'")
                 else:
                     print(f"✅ Entity '{entity_name}' already exists")
